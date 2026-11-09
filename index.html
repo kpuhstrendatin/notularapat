@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notula Rapat Otomatis</title>
+<style>
+:root{--bg:#fbf7ef;--card:#fff;--tx:#2b2620;--mut:#7a7164;--ac:#b4532a;--acx:#fff;--bd:#e6dccb;--rec:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1915;--card:#26221c;--tx:#f1ebe0;--mut:#a39a8b;--ac:#e0845a;--acx:#1c1915;--bd:#3a342b;--rec:#e8604f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.5rem;margin:0 0 4px}
+.sub{color:var(--mut);margin:0 0 20px}
+section{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:16px}
+h2{font-size:1rem;margin:0 0 10px}
+label{display:block;font-size:.85rem;color:var(--mut);margin:8px 0 3px}
+input,textarea{width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit}
+textarea{min-height:130px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.row{grid-template-columns:1fr}}
+button{font:inherit;padding:10px 16px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+button.p{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+button.rec{background:var(--rec);border-color:var(--rec);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.st{color:var(--mut);font-size:.9rem}
+.live{color:var(--mut);font-style:italic;min-height:1.4em;margin-top:6px}
+details summary{cursor:pointer;font-weight:600}
+a{color:var(--ac)}
+</style>
+</head>
+<body>
+<main>
+<h1>Notula Rapat Otomatis</h1>
+<p class="sub">Rekam per pembicara, transkrip muncul otomatis, lalu jadi notula format kantor (Word).</p>
+
+<section>
+<details id="ai">
+<summary>Pengaturan AI (Gemini)</summary>
+<label for="key">API key Gemini</label>
+<input id="key" type="password" placeholder="AIzaSy..." autocomplete="off">
+<label for="model">Model</label>
+<input id="model" value="gemini-2.5-flash" list="models">
+<datalist id="models"><option value="gemini-2.5-flash"><option value="gemini-2.5-pro"><option value="gemini-2.0-flash"></datalist>
+<div class="st" style="margin-top:8px">Key disimpan di browser ini saja. Ambil key di <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Kalau nama model ditolak, isi dengan nama model yang tersedia di akunmu. Tanpa key, notula tetap dibuat tetapi tanpa perapian bahasa.</div>
+<div class="bar"><button id="delKey">Hapus key</button></div>
+</details>
+</section>
+
+<section>
+<h2>1. Info rapat</h2>
+<div class="row">
+<div><label for="judul">Nama rapat</label><input id="judul"></div>
+<div><label for="inst">Instansi</label><input id="inst"></div>
+<div><label for="tgl">Tanggal</label><input id="tgl" type="date"></div>
+<div class="row" style="gap:6px"><div><label for="t1">Mulai</label><input id="t1" type="time" value="08:30"></div><div><label for="t2">Selesai</label><input id="t2" type="time" value="10:00"></div></div>
+<div><label for="tmp">Tempat</label><input id="tmp"></div>
+<div><label for="zona">Zona waktu</label><input id="zona" value="WITA"></div>
+</div>
+<label for="pes">Peserta rapat yang hadir</label><textarea id="pes" style="min-height:70px"></textarea>
+<label for="agd">Agenda</label><textarea id="agd" style="min-height:60px" placeholder="Mengevaluasi pelaksanaan kegiatan..."></textarea>
+<details style="margin-top:10px"><summary>Penandatangan</summary>
+<div class="row"><div><label for="notulis">Notulis</label><input id="notulis"></div><div><label for="sekr">Mengetahui, Sekretaris</label><input id="sekr"></div></div></details>
+<div class="st" style="margin-top:8px">Isian tetap (instansi, tempat, peserta, penandatangan) tersimpan di browser ini.</div>
+</section>
+
+<section>
+<h2>2. Rekam per pembicara</h2>
+<div class="bar" style="margin:0 0 10px"><span class="st" id="micTx">Mengecek mikrofon...</span><button id="micBtn" class="p" style="display:none">Izinkan mikrofon</button></div>
+<label for="spk">Siapa yang bicara? (jabatan – nama)</label>
+<input id="spk" list="spkl" placeholder="Kasubbag Teknis – Bapak Reza Juniardi" autocomplete="off">
+<datalist id="spkl"></datalist>
+<div class="bar">
+<button id="recBtn" class="p">● Mulai rekam</button>
+<button id="addBtn">+ Segmen manual</button>
+<button id="clrBtn">Hapus semua</button>
+</div>
+<div class="st" id="st" style="margin-top:6px">Alur: ketik pembicara → Mulai rekam → Berhenti → ketik pembicara berikutnya.</div>
+<div class="live" id="live"></div>
+<div id="segs"></div>
+</section>
+
+<section>
+<h2>3. Notula (isi kolom Kegiatan)</h2>
+<div class="bar"><button id="genBtn" class="p">Buat notula</button><span class="st" id="gst"></span></div>
+<label for="out">Hasil (bisa diedit; satu paragraf per baris)</label>
+<textarea id="out" style="min-height:300px"></textarea>
+<div class="bar">
+<button id="docBtn" class="p">Unduh Word (.doc)</button>
+<button id="cpBtn">Salin teks</button>
+</div>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const L=(k,d)=>{try{return localStorage.getItem(k)||d}catch(e){return d}};
+const S=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const D={judul:'RAPAT KOORDINASI MINGGUAN INTERNAL',inst:'SEKRETARIAT KPU KABUPATEN HULU SUNGAI TENGAH',tmp:'Aula KPU Kabupaten Hulu Sungai Tengah',pes:'Anggota KPU Kabupaten Hulu Sungai Tengah; Sekretaris KPU Kabupaten Hulu Sungai Tengah; Para Kasubbag KPU Kabupaten Hulu Sungai Tengah; Seluruh Pegawai Sekretariat KPU Kabupaten Hulu Sungai Tengah.',notulis:'ROBI SALIM',sekr:'RIZKAN YULIZAR DAMHUDI',zona:'WITA'};
+const KEYS=Object.keys(D);
+let saved={};try{saved=JSON.parse(L('cfg','{}'))}catch(e){}
+KEYS.forEach(k=>{$(k).value=saved[k]||D[k];$(k).addEventListener('input',()=>{const o={};KEYS.forEach(x=>o[x]=$(x).value);S('cfg',JSON.stringify(o))})});
+$('key').value=L('gkey','');$('model').value=L('gmodel','gemini-2.5-flash');
+$('key').oninput=()=>S('gkey',$('key').value.trim());
+$('model').oninput=()=>S('gmodel',$('model').value.trim());
+$('delKey').onclick=()=>{$('key').value='';try{localStorage.removeItem('gkey')}catch(e){}};
+if(!$('key').value)$('ai').open=true;
+const now=new Date();$('tgl').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+
+function tglID(){const v=$('tgl').value;return v?new Date(v+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):''}
+const jam=t=>(t||'').replace(':','.');
+const waktu=()=>'Pukul '+jam($('t1').value)+' s.d '+jam($('t2').value)+' '+$('zona').value;
+
+// ---- Izin mikrofon ----
+let micOK=false;
+const SAF=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const DENY=(SAF?'Mikrofon diblokir. Buka menu Safari → Pengaturan untuk Situs Web Ini → Mikrofon → Izinkan, lalu muat ulang. Pastikan juga Dikte aktif di Pengaturan Sistem → Papan Ketik → Dikte.':'Mikrofon diblokir. Klik ikon gembok/pengaturan di sebelah alamat web → Mikrofon → Izinkan, lalu muat ulang.');
+function micUI(s,msg){micOK=s==='granted';$('micTx').textContent=msg;$('micTx').style.color=micOK?'var(--ac)':'';$('micBtn').style.display=micOK?'none':''}
+async function micState(){
+  try{const r=await navigator.permissions.query({name:'microphone'});
+    const f=()=>{if(r.state==='granted')micUI('granted','✓ Mikrofon siap dipakai.');else if(r.state==='denied')micUI('denied',DENY);else micUI('prompt','Mikrofon belum diizinkan. Klik tombol di samping, lalu pilih "Izinkan".')};
+    f();r.onchange=f}
+  catch(e){micUI('unknown','Klik "Izinkan mikrofon" untuk menyiapkan rekaman.')}
+}
+async function askMic(){
+  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());micUI('granted','✓ Mikrofon siap dipakai.');return true}
+  catch(e){micUI(e&&e.name==='NotFoundError'?'unknown':'denied',e&&e.name==='NotFoundError'?'Mikrofon tidak ditemukan. Sambungkan mikrofon/headset, lalu coba lagi.':DENY);return false}
+}
+$('micBtn').onclick=askMic;micState();
+
+// ---- Rekam per pembicara ----
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,on=false,segs=[],cur=-1,names=[];
+try{names=JSON.parse(L('spk','[]'))}catch(e){}
+function fillNames(){$('spkl').innerHTML=names.map(n=>'<option value="'+n.replace(/"/g,'&quot;')+'">').join('')}
+fillNames();
+if(!SR){$('st').textContent='Browser tidak mendukung rekam suara. Gunakan Chrome, Edge, atau Safari terbaru, atau ketik lewat "+ Segmen manual".';$('recBtn').disabled=true}
+function render(){
+  const box=$('segs');box.innerHTML='';
+  segs.forEach((g,i)=>{
+    const d=document.createElement('div');d.style.cssText='border:1px solid var(--bd);border-radius:10px;padding:10px;margin-top:10px';
+    const hd=document.createElement('input');hd.value=g.s;hd.placeholder='Pembicara';hd.style.fontWeight='600';hd.oninput=()=>{g.s=hd.value};
+    const t=document.createElement('textarea');t.value=g.t;t.style.cssText='min-height:90px;margin-top:6px';t.oninput=()=>{g.t=t.value};g.el=t;
+    const x=document.createElement('button');x.textContent='Hapus segmen';x.style.marginTop='6px';
+    x.onclick=()=>{if(on&&i===cur)return;if(!g.t||confirm('Hapus segmen ini?')){segs.splice(i,1);if(cur>i)cur--;render()}};
+    d.append(hd,t,x);box.append(d);
+  });
+}
+function start(){
+  rec=new SR();rec.lang='id-ID';rec.continuous=true;rec.interimResults=true;
+  rec.onresult=e=>{let im='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal){const g=segs[cur];if(!g)continue;g.t=(g.t&&!g.t.endsWith('\n')?g.t+' ':g.t)+t.trim();if(g.el)g.el.value=g.t}else im+=t}$('live').textContent=im};
+  rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){on=false;ui();micUI('denied',DENY);$('st').textContent='Perekaman dihentikan.'}else if(e.error!=='no-speech'&&e.error!=='aborted')$('st').textContent='Error: '+e.error};
+  rec.onend=()=>{if(on){try{rec.start()}catch(e){}}else $('live').textContent=''};
+  rec.start();
+}
+function ui(){$('recBtn').textContent=on?'■ Berhenti':'● Mulai rekam';$('recBtn').className=on?'rec':'p';$('spk').disabled=on;if(on)$('st').textContent='Merekam: '+segs[cur].s}
+$('recBtn').onclick=async()=>{
+  if(!on){
+    const s=$('spk').value.trim();
+    if(!s){$('st').textContent='Ketik dulu siapa yang bicara.';$('spk').focus();return}
+    if(!micOK&&!(await askMic()))return;
+    if(!names.includes(s)){names.push(s);fillNames();S('spk',JSON.stringify(names))}
+    segs.push({s,t:''});cur=segs.length-1;render();on=true;ui();
+    try{start()}catch(e){on=false;ui();$('st').textContent='Gagal: '+e.message}
+  }else{
+    on=false;ui();try{rec.stop()}catch(e){}
+    $('spk').value='';$('spk').focus();$('st').textContent='Segmen tersimpan. Ketik pembicara berikutnya, lalu Mulai rekam.';
+  }
+};
+$('addBtn').onclick=()=>{if(on)return;segs.push({s:$('spk').value.trim(),t:''});$('spk').value='';render();const ts=$('segs').querySelectorAll('textarea');if(ts.length)ts[ts.length-1].focus()};
+$('clrBtn').onclick=()=>{if(on)return;if(!segs.length||confirm('Hapus semua segmen?')){segs=[];render()}};
+const segText=()=>segs.filter(g=>g.t.trim()).map(g=>'PEMBICARA: '+(g.s.trim()||'(tidak disebut)')+'\n'+g.t.trim()).join('\n\n');
+const plain=()=>segs.filter(g=>g.t.trim()).map(g=>(g.s.trim()||'Pembicara')+': '+g.t.trim()).join('\n');
+
+// ---- Gemini ----
+async function gemini(prompt){
+  const key=$('key').value.trim();if(!key)throw new Error('NOKEY');
+  const models=[...new Set([$('model').value.trim(),'gemini-2.5-flash','gemini-2.0-flash'].filter(Boolean))];
+  let last;
+  for(const m of models){
+    try{
+      const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(m)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.3}})});
+      const j=await r.json();
+      if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));
+      const t=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
+      if(!t)throw new Error('Respons kosong');
+      return t.trim();
+    }catch(e){last=e;if(/API key|permission|unauth|quota/i.test(e.message))break}
+  }
+  throw last;
+}
+$('genBtn').onclick=async()=>{
+  const tr=segText();
+  if(!tr){$('gst').textContent='Belum ada segmen transkrip.';return}
+  if(!$('key').value.trim()){$('out').value=plain();$('gst').textContent='Tanpa API key: transkrip dimasukkan apa adanya. Isi key Gemini untuk perapian otomatis.';return}
+  $('gst').textContent='Menyusun notula...';$('genBtn').disabled=true;
+  const prompt=`Kamu notulis di instansi pemerintah. Tulis HANYA isi kolom "Kegiatan" pada notula rapat dari transkrip di bawah, dengan gaya kantor berikut:
+- Bahasa Indonesia baku, formal, orang ketiga, kalimat ringkas.
+- Paragraf pertama: "Pembukaan : dibuka oleh [pimpinan rapat]. Kemudian mempersilakan ..." (sesuai transkrip).
+- Transkrip sudah dibagi per pembicara (label PEMBICARA). Pakai jabatan dan nama persis seperti label itu, jangan menebak pembicara. Satu paragraf per segmen, urutan sesuai transkrip. Awali dengan "Pertama penyampaian oleh [Jabatan] – [Nama]:" lalu "Dilanjutkan oleh [Jabatan] – [Nama]:" untuk berikutnya. Isi dipecah menjadi butir kalimat yang diawali "Menyampaikan bahwa ...", "Meminta ...", "Mengingatkan ...", dst.
+- Paragraf terakhir: kesimpulan dari pimpinan ("Kemudian kesimpulan oleh [Jabatan]: Menyampaikan ...") lalu penutupan: "Selesai kesimpulan acara langsung ditutup oleh [pimpinan] pada Pukul ${jam($('t2').value)} ${$('zona').value}."
+- Jangan mengarang nama, jabatan, angka, tanggal, atau keputusan. Jika tidak jelas, tulis "[perlu dicek]".
+- Perbaiki salah dengar yang jelas, buang kata pengisi. Pisahkan paragraf dengan satu baris baru. Teks polos tanpa markdown dan tanpa kalimat pembuka.
+
+Agenda: ${$('agd').value||'-'}
+
+TRANSKRIP:
+${tr}`;
+  try{$('out').value=await gemini(prompt);$('gst').textContent='Selesai. Periksa bagian [perlu dicek] lalu edit bila perlu.'}
+  catch(e){$('gst').textContent='Gagal: '+(e.message||'error')+'. Transkrip asli dimasukkan ke hasil.';if(!$('out').value)$('out').value=plain()}
+  $('genBtn').disabled=false;
+};
+
+// ---- Word ----
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function docHTML(){
+  const kg=$('out').value.split(/\n+/).filter(x=>x.trim()).map(p=>`<p style="text-align:justify;margin:0 0 6pt">${esc(p)}</p>`).join('');
+  const R=(a,b)=>`<tr><td style="width:110pt;vertical-align:top">${a}</td><td style="width:12pt;vertical-align:top">:</td><td>${esc(b)}</td></tr>`;
+  return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Notula</title><style>@page{size:21cm 29.7cm;margin:2cm}body{font-family:"Times New Roman";font-size:12pt}td{font-family:"Times New Roman";font-size:12pt}</style></head><body>
+<p style="text-align:center;margin:0"><b>NOTULA</b></p>
+<p style="text-align:center;margin:0"><b>${esc($('judul').value)}</b></p>
+<p style="text-align:center;margin:0 0 12pt"><b>${esc($('inst').value)}</b></p>
+<table style="border-collapse:collapse;margin-bottom:8pt">${R('Hari/Tanggal',tglID())}${R('Waktu',waktu())}${R('Tempat',$('tmp').value)}</table>
+<p style="margin:0 0 4pt"><b>PESERTA RAPAT YANG HADIR :</b></p>
+<table border="1" style="border-collapse:collapse;width:100%" cellpadding="5">
+<tr><td colspan="3">${esc($('pes').value)}</td></tr>
+<tr><td style="width:60pt;vertical-align:top">Agenda</td><td style="width:10pt;vertical-align:top">:</td><td>${esc($('agd').value)}</td></tr>
+<tr><td style="vertical-align:top">Kegiatan</td><td style="vertical-align:top">:</td><td>${kg}</td></tr></table>
+<br><table style="width:100%"><tr><td style="width:50%;text-align:center">Mengetahui<br>Sekretaris,<br><br><br><br><u>${esc($('sekr').value)}</u></td><td style="text-align:center"><br>Notulis,<br><br><br><br><u>${esc($('notulis').value)}</u></td></tr></table>
+</body></html>`;
+}
+$('docBtn').onclick=()=>{
+  if(!$('out').value.trim()){$('gst').textContent='Buat notula dulu.';return}
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+docHTML()],{type:'application/msword'}));
+  a.download='Notula-Rapat-'+($('tgl').value||'')+'.doc';
+  document.body.appendChild(a);a.click();a.remove();
+  $('gst').textContent='Terunduh. Buka dengan Word.';
+};
+$('cpBtn').onclick=async()=>{try{await navigator.clipboard.writeText($('out').value);$('gst').textContent='Tersalin.'}catch(e){$('out').select();$('gst').textContent='Pilih teks lalu salin manual.'}};
+</script>
+</body>
+</html>
