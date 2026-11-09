@@ -205,6 +205,58 @@ const $=id=>document.getElementById(id);
 const L=(k,d)=>{try{return localStorage.getItem(k)||d}catch(e){return d}};
 const S=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const SKEL={
+mingguan:`# Pembukaan : dibuka oleh Sekretaris KPU Kabupaten Hulu Sungai Tengah. Kemudian mempersilakan [pihak yang dipersilakan] untuk menyampaikan [pokok pembahasan].
+{{SEGMEN}}
+# Kemudian kesimpulan oleh Sekretaris KPU Kabupaten Hulu Sungai Tengah: [isi kesimpulan]
+# Selesai kesimpulan acara langsung ditutup oleh Sekretaris KPU Kabupaten Hulu Sungai Tengah pada Pukul [selesai] [zona].`,
+pleno:`# Registrasi peserta;
+# Pembukaan :
+- Menyanyikan lagu Indonesia Raya dan Mars KPU;
+- Pembacaan Doa;
+- Sambutan sekaligus Pembukaan oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah;
+# Rapat Pleno Terbuka dipimpin oleh [nama] selaku [jabatan] :
+- [pemaparan 1, mis. tindak lanjut saran perbaikan dari Bawaslu];
+- [pemaparan 2, mis. pembacaan rekapitulasi hasil PDPB triwulan ...];
+# Tanggapan dan Masukan Peserta Rapat
+{{SEGMEN}}
+# Tanggapan KPU Kabupaten Hulu Sungai Tengah
+[nama] selaku [jabatan] memberikan tanggapan sebagai berikut:
+- [tanggapan KPU atas masukan peserta];
+# Pembacaan Berita Acara oleh [pejabat], Nomor : [nomor] Tentang [perihal]
+# Penandatanganan Berita Acara Nomor : [nomor] Tentang [perihal]
+# Penyerahan Simbolis Berita Acara [nama berita acara] kepada :
+- [instansi penerima 1];
+- [instansi penerima 2];
+# Acara ditutup oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah pada Pukul [selesai] [zona].`,
+fkp:`# Registrasi peserta;
+# Pembukaan :
+- Menyanyikan lagu Indonesia Raya dan mendengarkan mars KPU;
+- Pembacaan doa;
+- Sambutan sekaligus pembukaan oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah;
+# Forum Konsultasi Publik dimulai oleh [nama] selaku moderator. [Penjelasan tujuan forum dari moderator];
+# Dilanjutkan dengan pemaparan [materi] oleh [nama dan jabatan narasumber];
+# Kemudian dilanjutkan oleh [nama dan jabatan] yang memaparkan [materi berikutnya];
+# Tanggapan dan masukan peserta Forum Konsultasi Publik :
+{{SEGMEN}}
+# Tanggapan narasumber :
+- [jabatan, nama narasumber] :
+-- Atas pertanyaan [penanya]: [jawaban];
+# Kesimpulan dari moderator [nama], [isi kesimpulan dan ucapan terima kasih];
+# Penandatangan Berita Acara oleh [pihak yang menandatangani];
+# Acara ditutup oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah pada Pukul [selesai] [zona].`,
+rakor:`# Registrasi peserta;
+# Pembukaan :
+- Menyanyikan lagu Indonesia Raya;
+- Pembacaan Doa;
+- Sambutan sekaligus Pembukaan oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah;
+# Pemaparan Inti Rapat Koordinasi:
+Disampaikan oleh [nama] selaku [jabatan].
+- [poin pemaparan 1];
+- [poin pemaparan 2];
+# Tanggapan dan Masukan Peserta Rapat
+{{SEGMEN}}
+# Acara ditutup oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah pada Pukul [selesai] [zona].`};
+const OLDSKEL={
 mingguan:`# Pembukaan : dibuka oleh [pimpinan rapat, mis. Sekretaris KPU Kabupaten Hulu Sungai Tengah]. Kemudian mempersilakan [pihak yang dipersilakan] untuk menyampaikan [pokok pembahasan].
 {{SEGMEN}}
 # Kemudian kesimpulan oleh [jabatan pimpinan rapat]: [isi kesimpulan]
@@ -256,6 +308,11 @@ Disampaikan oleh [nama] selaku [jabatan].
 # Tanggapan dan Masukan Peserta Rapat
 {{SEGMEN}}
 # Acara ditutup oleh [jabatan dan nama penutup] pada Pukul [selesai] [zona].`};
+const RULES={
+mingguan:'Pembukaan rapat, kesimpulan, dan penutupan selalu oleh Sekretaris KPU Kabupaten Hulu Sungai Tengah. Tulis demikian walaupun tidak disebut jelas di transkrip.',
+pleno:'Sambutan sekaligus pembukaan dan penutupan acara selalu oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah. Tulis demikian walaupun tidak disebut jelas di transkrip.',
+fkp:'Sambutan sekaligus pembukaan dan penutupan acara selalu oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah. Tulis demikian walaupun tidak disebut jelas di transkrip.',
+rakor:'Sambutan sekaligus pembukaan dan penutupan acara selalu oleh Ketua KPU Kab. Hulu Sungai Tengah H. Ardiansyah. Tulis demikian walaupun tidak disebut jelas di transkrip.'};
 const SEGP={
 mingguan:'Untuk setiap segmen pembicara tulis "# Pertama penyampaian oleh [label PEMBICARA persis]:" (segmen pertama) atau "# Dilanjutkan oleh [label PEMBICARA persis]:" (segmen berikutnya), lalu poin di bawahnya: "- Menyampaikan bahwa ...", "- Meminta ...", "- Mengingatkan ...".',
 pleno:'Untuk setiap segmen pembicara tulis "- [label PEMBICARA persis]:" lalu tiap pernyataannya sebagai "-- Menyampaikan bahwa ...", "-- Meminta ...". Segmen pimpinan rapat atau pemapar yang jelas termasuk bagian lain ditempatkan di bagian yang sesuai, bukan di sini.',
@@ -271,9 +328,10 @@ function dflt(k){const c=TPLS[k];return {judul:c.judul.join('\n'),pes:c.peserta.
 function loadJenis(){
   const k=$('jenis').value;let sv={};try{sv=JSON.parse(L('cfg2_'+k,'{}'))}catch(e){}
   const df=dflt(k);FIELDS.forEach(f=>{$(f).value=sv[f]!==undefined?sv[f]:df[f]});
+  if(sv.tpl===undefined||sv.tpl===OLDSKEL[k]||(sv.tplBase!==undefined&&sv.tpl===sv.tplBase&&sv.tplBase!==SKEL[k]))$('tpl').value=SKEL[k];
   $('fotoBox').style.display=TPLS[k].foto?'':'none';togglePlh();
 }
-function saveJenis(){const o={};FIELDS.forEach(f=>o[f]=$(f).value);S('cfg2_'+$('jenis').value,JSON.stringify(o))}
+function saveJenis(){const o={};FIELDS.forEach(f=>o[f]=$(f).value);o.tplBase=SKEL[$('jenis').value];S('cfg2_'+$('jenis').value,JSON.stringify(o))}
 $('jenis').value=L('jenis','mingguan');if(!TPLS[$('jenis').value])$('jenis').value='mingguan';
 $('jenis').onchange=()=>{S('jenis',$('jenis').value);loadJenis()};
 FIELDS.forEach(f=>$(f).addEventListener('input',saveJenis));
@@ -452,6 +510,7 @@ CARA MENGISI KERANGKA:
 - Butir yang menurut transkrip jelas tidak terjadi boleh dihapus; bila ragu, pertahankan dan tandai "[perlu dicek]".
 - Butir yang berupa contoh berulang boleh digandakan atau dikurangi sesuai isi rapat.
 - Baris {{SEGMEN}} diganti isi segmen-segmen pembicara. ${SEGP[$('jenis').value]}
+- ATURAN TETAP: ${RULES[$('jenis').value]}
 
 CATATAN GAYA: ${T.gaya}
 
