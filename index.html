@@ -54,6 +54,14 @@ a{color:var(--h)}
 .th{position:relative;width:96px;height:64px}
 .th img{width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid var(--bd)}
 .th button{position:absolute;top:-7px;right:-7px;padding:0 7px;border-radius:50%;line-height:22px;background:var(--ac);color:#fff}
+.segtop{display:flex;gap:8px;align-items:center}
+.segtop input{flex:1;min-width:0;font-weight:600}
+.segn{flex:none;width:28px;height:28px;border-radius:50%;background:var(--ac);color:#fff;font-weight:700;font-size:.85rem;display:grid;place-items:center}
+.grip{flex:none;cursor:grab;color:var(--mut);user-select:none;font-size:1.15rem;line-height:1;padding:2px}
+.mv{flex:none;padding:6px 11px;font-size:1rem;line-height:1.1}
+.seg.flash{animation:fl 1.1s}
+@keyframes fl{0%{box-shadow:0 0 0 3px var(--ring);background:var(--acs)}100%{box-shadow:none}}
+.seg.over{outline:2px dashed var(--ac)}
 </style>
 </head>
 <body>
@@ -329,16 +337,32 @@ $('micBtn').onclick=askMic;micState();
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let rec=null,on=false,segs=[],cur=-1;
 if(!SR){$('st').textContent='Browser tidak mendukung rekam suara. Gunakan Chrome, Edge, atau Safari terbaru, atau ketik lewat "+ Segmen manual".';$('recBtn').disabled=true}
+let drag=-1,focusIdx=-1;
+function go(i){focusIdx=i;render()}
+function mv(i,d){const j=i+d;if(on||j<0||j>=segs.length)return;const t=segs[i];segs[i]=segs[j];segs[j]=t;go(j)}
 function render(){
   const box=$('segs');box.innerHTML='';
+  if(segs.length>1){const h=document.createElement('div');h.className='st';h.style.marginTop='12px';h.textContent='Urutan segmen = urutan di notula. Atur dengan tombol ↑ ↓ atau seret ⠿ (di komputer).';box.append(h)}
   segs.forEach((g,i)=>{
     const d=document.createElement('div');d.className='seg';
-    const hd=document.createElement('input');hd.value=g.s;hd.placeholder='Pembicara';hd.style.fontWeight='600';hd.oninput=()=>{g.s=hd.value};
-    const t=document.createElement('textarea');t.value=g.t;t.style.cssText='min-height:90px;margin-top:6px';t.oninput=()=>{g.t=t.value};g.el=t;
-    const x=document.createElement('button');x.textContent='Hapus segmen';x.style.marginTop='6px';
+    const top=document.createElement('div');top.className='segtop';
+    const grip=document.createElement('span');grip.className='grip';grip.textContent='⠿';grip.title='Seret untuk memindahkan';grip.draggable=true;
+    const n=document.createElement('span');n.className='segn';n.textContent=i+1;n.title='Segmen ke-'+(i+1)+' dari '+segs.length;
+    const hd=document.createElement('input');hd.value=g.s;hd.placeholder='Pembicara';hd.oninput=()=>{g.s=hd.value};
+    const up=document.createElement('button');up.className='mv';up.textContent='↑';up.title='Naikkan';up.disabled=on||i===0;up.onclick=()=>mv(i,-1);
+    const dn=document.createElement('button');dn.className='mv';dn.textContent='↓';dn.title='Turunkan';dn.disabled=on||i===segs.length-1;dn.onclick=()=>mv(i,1);
+    top.append(grip,n,hd,up,dn);
+    const t=document.createElement('textarea');t.value=g.t;t.style.cssText='min-height:90px;margin-top:8px';t.oninput=()=>{g.t=t.value};g.el=t;
+    const x=document.createElement('button');x.textContent='Hapus segmen';x.style.marginTop='8px';
     x.onclick=()=>{if(on&&i===cur)return;if(!g.t||confirm('Hapus segmen ini?')){segs.splice(i,1);if(cur>i)cur--;render()}};
-    d.append(hd,t,x);box.append(d);
+    grip.ondragstart=e=>{if(on){e.preventDefault();return}drag=i;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(i));try{e.dataTransfer.setDragImage(d,16,16)}catch(_){}};
+    grip.ondragend=()=>{drag=-1;document.querySelectorAll('.seg.over').forEach(el=>el.classList.remove('over'))};
+    d.ondragover=e=>{if(drag>=0&&drag!==i){e.preventDefault();d.classList.add('over')}};
+    d.ondragleave=()=>d.classList.remove('over');
+    d.ondrop=e=>{e.preventDefault();d.classList.remove('over');if(drag<0||drag===i)return;const m=segs.splice(drag,1)[0];segs.splice(i,0,m);drag=-1;go(i)};
+    d.append(top,t,x);box.append(d);
   });
+  if(focusIdx>=0){const el=box.querySelectorAll('.seg')[focusIdx];focusIdx=-1;if(el){el.classList.add('flash');if(el.scrollIntoView)el.scrollIntoView({block:'nearest',behavior:'smooth'})}}
 }
 function start(){
   rec=new SR();rec.lang='id-ID';rec.continuous=true;rec.interimResults=true;
@@ -347,7 +371,7 @@ function start(){
   rec.onend=()=>{if(on){try{rec.start()}catch(e){}}else $('live').textContent=''};
   rec.start();
 }
-function ui(){$('recBtn').textContent=on?'■ Berhenti':'● Mulai rekam';$('recBtn').className=on?'rec':'p';$('spk').disabled=on;$('spkOther').disabled=on;if(on)$('st').textContent='Merekam: '+segs[cur].s}
+function ui(){render();$('recBtn').textContent=on?'■ Berhenti':'● Mulai rekam';$('recBtn').className=on?'rec':'p';$('spk').disabled=on;$('spkOther').disabled=on;if(on)$('st').textContent='Merekam: '+segs[cur].s}
 function nextSpk(){const s=$('spk');if(s.value==='__other__'){$('spkOther').value='';return}if(s.selectedIndex<s.options.length-2)s.selectedIndex++}
 $('recBtn').onclick=async()=>{
   if(!on){
