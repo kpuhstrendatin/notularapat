@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#7a1f2b">
-<meta name="app-build" content="16">
+<meta name="app-build" content="17">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -176,6 +176,20 @@ details.more .menu button{text-align:left;white-space:nowrap}
 #updBar button.p{background:#fff;color:var(--ac2)}
 .ft{max-width:1200px;margin:0 auto;padding:6px 16px 36px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--mut);font-size:.85rem}
 .ft button{padding:4px 12px;font-size:.8rem}
+select{-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%237a1f2b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px;padding-right:38px;text-overflow:ellipsis;cursor:pointer}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23ee9fac' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}}
+:root[data-theme="dark"] select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23ee9fac' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.gantibtn{flex:none;min-height:36px;padding:6px 14px;border-radius:10px;font-size:.85rem;font-weight:700;background:var(--acs);color:var(--h);white-space:nowrap}
+.gantibtn:hover{background:var(--bd)}
+.segacts{gap:8px;align-items:flex-start}
+details.more>summary{min-height:36px;display:flex;align-items:center;justify-content:center}
+.picker{position:fixed;z-index:90;background:var(--card);border:1px solid var(--bd);border-radius:16px;box-shadow:0 20px 50px -15px rgba(40,10,16,.5);padding:10px;display:flex;flex-direction:column;gap:8px}
+.picker input{width:100%}
+.plist{max-height:min(300px,45vh);overflow:auto;display:flex;flex-direction:column;gap:2px}
+.popt{text-align:left;background:transparent;border-radius:10px;padding:9px 12px;font-weight:500;color:var(--tx);white-space:normal;line-height:1.3}
+.popt:hover,.popt:focus{background:var(--acs)}
+.popt.cur{background:var(--acs);font-weight:700;color:var(--h)}
+.popt.other{color:var(--h);font-weight:700;border-top:1px solid var(--bd);border-radius:0 0 10px 10px;margin-top:4px}
 </style>
 
 </head>
@@ -275,7 +289,7 @@ details.more .menu button{text-align:left;white-space:nowrap}
 </section>
 </div><aside class="col2" id="side" aria-label="Pratinjau notula"><section><h2>Pratinjau Notula</h2><div id="sideBody" class="pv"></div></section></aside></div>
 </main>
-<footer class="ft"><span>Notula Rapat Otomatis · <b id="ver">v16</b></span><button id="updBtn" type="button">Periksa pembaruan</button><span class="st" id="updSt" role="status" aria-live="polite"></span></footer>
+<footer class="ft"><span>Notula Rapat Otomatis · <b id="ver">v17</b></span><button id="updBtn" type="button">Periksa pembaruan</button><span class="st" id="updSt" role="status" aria-live="polite"></span></footer>
 <div id="updBar" role="status" style="display:none"><span id="updTx"></span><button id="updReload" class="p" type="button">Muat ulang</button><button id="updLater" type="button">Nanti</button></div>
 <div id="undo" role="status" aria-live="polite"><span id="undoTx"></span><button id="undoBtn" type="button">Urungkan</button></div>
 <div id="dock" role="region" aria-label="Kontrol rekam"><div class="meter" aria-hidden="true"><i id="lvl2"></i></div><div class="in"><button id="prevBtn2" type="button" title="Pembicara sebelumnya" aria-label="Pembicara sebelumnya">←</button><select id="spk2" aria-label="Pembicara (saat merekam: ganti pembicara segmen yang sedang direkam)" title="Saat merekam, ini mengganti pembicara segmen yang sedang direkam"></select><button id="nextBtn2" type="button" title="Pembicara berikutnya" aria-label="Pembicara berikutnya">→</button><span class="tm" id="timer2">00:00</span><button id="pauseBtn2" type="button" style="display:none" aria-label="Jeda rekaman">⏸</button><button id="recBtn2" class="p" type="button">● Rekam</button></div></div>
@@ -1081,12 +1095,10 @@ function render(){
     const up=document.createElement('button');up.className='mv';up.textContent='↑ Naikkan';up.title='Naikkan segmen';up.setAttribute('aria-label','Naikkan segmen '+(i+1));up.disabled=on||i===0;up.onclick=()=>{more.open=false;mv(i,-1)};
     const dn=document.createElement('button');dn.className='mv';dn.textContent='↓ Turunkan';dn.title='Turunkan segmen';dn.setAttribute('aria-label','Turunkan segmen '+(i+1));dn.disabled=on||i===segs.length-1;dn.onclick=()=>{more.open=false;mv(i,1)};
     menu.append(up,dn);more.append(sm,menu);
-    const sel=document.createElement('select');sel.className='spksel';sel.setAttribute('aria-label','Ganti pembicara segmen '+(i+1));sel.title='Salah pilih pembicara? Ganti di sini';
-    const o0=document.createElement('option');o0.value='';o0.textContent='Ganti ▾';sel.append(o0);
-    spkNames().forEach(nm=>{const o=document.createElement('option');o.value=nm;o.textContent=nm;sel.append(o)});
-    const oo=document.createElement('option');oo.value='__other__';oo.textContent='Lainnya (ketik manual)…';sel.append(oo);
-    sel.onchange=()=>{const v=sel.value;sel.value='';if(!v)return;if(v==='__other__'){hd.focus();hd.select();return}
-      hd.value=v;hd.oninput();touch();if(on&&i===cur){syncDockTo(v);$('st').textContent=(paused?'Dijeda: ':'Merekam: ')+v}toast('Pembicara segmen '+(i+1)+' diubah: '+v)};
+    const sel=document.createElement('button');sel.type='button';sel.className='gantibtn';sel.textContent='⇄ Ganti';sel.title='Salah pilih pembicara? Ganti di sini';sel.setAttribute('aria-label','Ganti pembicara segmen '+(i+1));sel.setAttribute('aria-haspopup','dialog');
+    sel.onclick=e=>{e.stopPropagation();openPicker(sel,g.s,v=>{
+      if(v==='__other__'){hd.focus();hd.select();return}
+      hd.value=v;hd.oninput();touch();if(on&&i===cur){syncDockTo(v);$('st').textContent=(paused?'Dijeda: ':'Merekam: ')+v}toast('Pembicara segmen '+(i+1)+' diubah: '+v)})};
     const who2=document.createElement('div');who2.className='who2';const cl=document.createElement('div');cl.className='chipline';cl.append(chip);who2.append(hd,cl);
     const acts=document.createElement('div');acts.className='segacts';acts.append(sel,more);
     top.append(grip,n,av,who2,acts);
@@ -1416,6 +1428,47 @@ function renderPrev(){
   lastOutSer=$('out').value;paintSel();
 }
 renderPrev();
+
+</script>
+<script>
+// ===== Tahap 6: pemilih pembicara (tombol Ganti) =====
+let picker=null,pickerAnchor=null;
+function closePicker(){if(picker){picker.remove();picker=null;pickerAnchor=null}}
+function placePicker(){
+  if(!picker||!pickerAnchor)return;
+  if(!pickerAnchor.isConnected){closePicker();return}
+  const r=pickerAnchor.getBoundingClientRect(),w=Math.min(400,window.innerWidth-16);
+  picker.style.width=w+'px';picker.style.left=Math.min(Math.max(8,r.right-w),window.innerWidth-w-8)+'px';
+  const h=picker.offsetHeight||320,below=window.innerHeight-r.bottom;
+  if(below<h+12&&r.top>below){picker.style.top='auto';picker.style.bottom=(window.innerHeight-r.top+6)+'px'}
+  else{picker.style.bottom='auto';picker.style.top=(r.bottom+6)+'px'}
+}
+function openPicker(anchor,current,onPick){
+  closePicker();
+  const names=spkNames(),box=document.createElement('div');
+  box.className='picker';box.setAttribute('role','dialog');box.setAttribute('aria-label','Pilih pembicara');
+  const q=document.createElement('input');q.type='search';q.placeholder='Cari pembicara…';q.setAttribute('aria-label','Cari pembicara');q.autocomplete='off';
+  const list=document.createElement('div');list.className='plist';list.setAttribute('role','listbox');
+  const fill=()=>{
+    list.innerHTML='';const f=q.value.trim().toLowerCase();let n=0;
+    names.forEach(nm=>{
+      if(f&&!nm.toLowerCase().includes(f))return;n++;
+      const b=document.createElement('button');b.type='button';b.setAttribute('role','option');b.className='popt'+(nm===current?' cur':'');
+      b.setAttribute('aria-selected',nm===current?'true':'false');b.textContent=(nm===current?'✓ ':'')+nm;
+      b.onclick=()=>{closePicker();onPick(nm)};list.append(b);
+    });
+    if(!n){const e=document.createElement('div');e.className='st';e.style.padding='8px 10px';e.textContent='Tidak ada yang cocok.';list.append(e)}
+    const o=document.createElement('button');o.type='button';o.className='popt other';o.textContent='✎ Lainnya (ketik manual)…';o.onclick=()=>{closePicker();onPick('__other__')};list.append(o);
+  };
+  q.oninput=fill;fill();
+  q.onkeydown=e=>{if(e.key==='Enter'){const f=list.querySelector('.popt:not(.other)')||list.querySelector('.popt');if(f){e.preventDefault();f.click()}}};
+  box.append(q,list);document.body.append(box);picker=box;pickerAnchor=anchor;placePicker();
+  q.focus();const c=list.querySelector('.popt.cur');if(c&&c.scrollIntoView)c.scrollIntoView({block:'nearest'});
+}
+document.addEventListener('mousedown',e=>{if(picker&&!picker.contains(e.target)&&!(e.target.closest&&e.target.closest('.gantibtn')))closePicker()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&picker){closePicker()}});
+window.addEventListener('resize',placePicker);
+window.addEventListener('scroll',e=>{if(picker&&!picker.contains(e.target))placePicker()},true);
 
 </script>
 </body>
