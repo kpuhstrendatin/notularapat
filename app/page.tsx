@@ -5,6 +5,7 @@ import { tampilkanPesan } from '@/components/Popup';
 import { SUBBAG, LBL, STATUS, hariIni, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, tambahHari, tanggalRapat, dalamPeriode, type Periode } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
+import { Pilih, fieldCls } from '@/components/ui';
 import Ikon from '@/components/Ikon';
 import { StatusChip, StatusEdit } from '@/components/Status';
 
@@ -28,28 +29,18 @@ const kartu = 'rounded-2xl border border-stone-200 bg-white p-5 shadow-sm';
 
 export default function Dashboard() {
   const [rows, setRows] = useState<Decision[] | null>(null);
-  const [logs, setLogs] = useState<Log[]>([]);
-  const [logErr, setLogErr] = useState('');
   const [periode, setPeriode] = useState<Periode>('semua');
+  const [bulanPilih, setBulanPilih] = useState(hariIni().slice(0, 7));
+  const [dasar, setDasar] = useState<'rapat' | 'dibuat'>('rapat');
   const [oleh, setOleh] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
   async function muat() {
     try {
-      const [a, b] = await Promise.all([
-        fetch('/api/decisions', { cache: 'no-store' }).then((r) => r.json()),
-        fetch('/api/riwayat', { cache: 'no-store' }).then((r) => r.json()),
-      ]);
+      const a = await fetch('/api/decisions', { cache: 'no-store' }).then((r) => r.json());
       if (!Array.isArray(a)) throw new Error(a.error ?? 'Gagal memuat keputusan');
       setRows(a);
-      if (Array.isArray(b)) {
-        setLogs(b.slice(0, 6));
-        setLogErr('');
-      } else {
-        setLogs([]);
-        setLogErr(b.error ?? 'Gagal memuat aktivitas');
-      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Kesalahan tidak diketahui');
     }
@@ -76,7 +67,8 @@ export default function Dashboard() {
   if (err) return <p className="rounded-2xl bg-red-50 p-4 text-red-700">Gagal memuat data: {err}</p>;
   if (!rows) return <p className="rounded-2xl bg-white p-4 text-stone-500 shadow-sm">Memuat data…</p>;
 
-  const dipilih = rows.filter((d) => dalamPeriode(tanggalRapat(d), periode));
+  const tglDasar = (d: Decision) => (dasar === 'rapat' ? tanggalRapat(d) : d.created_at.slice(0, 10));
+  const dipilih = rows.filter((d) => dalamPeriode(tglDasar(d), periode, bulanPilih));
   const total = dipilih.length;
   const cnt = (s: Status) => dipilih.filter((d) => d.status === s).length;
   const nLate = dipilih.filter(isLate).length;
@@ -125,19 +117,27 @@ export default function Dashboard() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           <span className="flex items-center gap-1.5 text-sm text-stone-500">
-            <Ikon nama="kalender" className="h-4 w-4" /> Periode (tanggal rapat):
+            <Ikon nama="kalender" className="h-4 w-4" /> Periode:
           </span>
-          <select className="rounded-lg border p-2 text-sm" value={periode} onChange={(e) => setPeriode(e.target.value as Periode)}>
-            <option value="semua">Semua</option>
+          <Pilih value={periode} onChange={(e) => setPeriode(e.target.value as Periode)} className="w-44">
+            <option value="semua">Semua waktu</option>
             <option value="bulan">Bulan ini</option>
             <option value="triwulan">Triwulan ini</option>
-          </select>
+            <option value="bulanTertentu">Bulan tertentu</option>
+          </Pilih>
+          {periode === 'bulanTertentu' && (
+            <input type="month" className={`${fieldCls} w-44`} value={bulanPilih} onChange={(e) => setBulanPilih(e.target.value)} />
+          )}
+          <Pilih value={dasar} onChange={(e) => setDasar(e.target.value as 'rapat' | 'dibuat')} className="w-60">
+            <option value="rapat">Dihitung dari tanggal rapat</option>
+            <option value="dibuat">Dihitung dari tanggal dibuat</option>
+          </Pilih>
         </div>
         <div className="w-full md:w-80">
           <label className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-stone-500">
             <Ikon nama="orang" className="h-3.5 w-3.5" /> Nama pengubah (wajib untuk mengubah progres)
           </label>
-          <PilihPengubah value={oleh} onChange={setOleh} className="w-full rounded-lg border p-2 text-sm" />
+          <PilihPengubah value={oleh} onChange={setOleh} />
         </div>
       </div>
       {msg && <p className="text-sm text-stone-600">{msg}</p>}
@@ -285,27 +285,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className={kartu}>
-          <h2 className="font-bold">Aktivitas terbaru</h2>
-          {logErr && <p className="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">{logErr}</p>}
-          <div className="mt-3 space-y-3 text-sm">
-            {logs.map((l) => (
-              <div key={l.id} className="border-b pb-3 last:border-0">
-                <div className="font-medium">{l.isi}</div>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-                  {l.status_lama ? <StatusChip status={l.status_lama} /> : null}
-                  <span>→</span>
-                  <StatusChip status={l.status_baru} />
-                </div>
-                <div className="mt-1 text-xs text-stone-500">
-                  {l.oleh ?? '—'} ·{' '}
-                  {new Date(l.at).toLocaleString('id-ID', { timeZone: 'Asia/Makassar', dateStyle: 'medium', timeStyle: 'short' })}
-                </div>
-              </div>
-            ))}
-            {!logErr && logs.length === 0 && <p className="text-stone-500">Belum ada perubahan progres.</p>}
-          </div>
-        </section>
       </div>
 
       <section className={kartu}>
