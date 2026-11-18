@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Ikon from './Ikon';
 import { LBL, STATUS, type Status } from '@/lib/types';
 
@@ -28,7 +31,7 @@ export const STATUS_STYLE: Record<Status, { aktif: string; pasif: string; ikon: 
   },
 };
 
-// Lencana status (tidak bisa diklik)
+// Lencana status (hanya tampilan)
 export function StatusChip({ status }: { status: Status }) {
   const s = STATUS_STYLE[status];
   return (
@@ -43,12 +46,10 @@ export function StatusChip({ status }: { status: Status }) {
 export function StatusPilih({
   value,
   onChange,
-  disabled,
   kecil,
 }: {
   value: Status;
   onChange: (s: Status) => void;
-  disabled?: boolean;
   kecil?: boolean;
 }) {
   return (
@@ -60,9 +61,8 @@ export function StatusPilih({
           <button
             key={s}
             type="button"
-            disabled={disabled}
             onClick={() => onChange(s)}
-            className={`inline-flex items-center gap-1.5 rounded-full border font-semibold transition disabled:opacity-50 ${
+            className={`inline-flex items-center gap-1.5 rounded-full border font-semibold transition ${
               kecil ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-xs'
             } ${aktif ? st.aktif : st.pasif}`}
           >
@@ -71,6 +71,44 @@ export function StatusPilih({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+// Tampilan progres satu status, dengan ikon pensil untuk mengubah.
+// Saat pensil diklik, empat pilihan muncul.
+export function StatusEdit({ value, onChange }: { value: Status; onChange: (s: Status) => void }) {
+  const [buka, setBuka] = useState(false);
+
+  if (buka) {
+    return (
+      <div className="flex flex-col items-start gap-2">
+        <StatusPilih
+          kecil
+          value={value}
+          onChange={(s) => {
+            onChange(s);
+            setBuka(false);
+          }}
+        />
+        <button onClick={() => setBuka(false)} className="text-xs text-stone-500 underline">
+          Batal
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <StatusChip status={value} />
+      <button
+        onClick={() => setBuka(true)}
+        title="Ubah progres"
+        aria-label="Ubah progres"
+        className="grid h-7 w-7 place-items-center rounded-full border text-stone-600 hover:bg-stone-100"
+      >
+        <Ikon nama="pensil" className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
