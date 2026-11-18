@@ -284,29 +284,29 @@ export default function Dashboard() {
             {tenggat7.length === 0 && <p className="text-stone-500">Tidak ada tenggat dalam 7 hari ke depan.</p>}
           </div>
         </section>
+        <section className={kartu}>
+          <h2 className="font-bold">Keputusan terbaru</h2>
+          <div className="mt-2 divide-y">
+            {terbaru.map((d) => (
+              <div key={d.id} className="flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-4">
+                <div className="min-w-0 flex-1 text-sm font-medium">{d.isi}</div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-500 md:flex-none">
+                  <span>{d.subbag}</span>
+                  <span>{fmt(d.tenggat)}</span>
+                  {isLate(d) ? (
+                    <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">Terlambat</span>
+                  ) : (
+                    <StatusChip status={d.status} />
+                  )}
+                </div>
+              </div>
+            ))}
+            {terbaru.length === 0 && <p className="py-2 text-stone-500">Belum ada keputusan pada periode ini.</p>}
+          </div>
+        </section>
 
       </div>
 
-      <section className={kartu}>
-        <h2 className="font-bold">Keputusan terbaru</h2>
-        <div className="mt-2 divide-y">
-          {terbaru.map((d) => (
-            <div key={d.id} className="flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-4">
-              <div className="min-w-0 flex-1 text-sm font-medium">{d.isi}</div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-500 md:flex-none">
-                <span>{d.subbag}</span>
-                <span>{fmt(d.tenggat)}</span>
-                {isLate(d) ? (
-                  <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">Terlambat</span>
-                ) : (
-                  <StatusChip status={d.status} />
-                )}
-              </div>
-            </div>
-          ))}
-          {terbaru.length === 0 && <p className="py-2 text-stone-500">Belum ada keputusan pada periode ini.</p>}
-        </div>
-      </section>
     </div>
   );
 }
