@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { tampilkanPesan } from '@/components/Popup';
 import { LBL, STATUS, SUBBAG, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, unduhCSV } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
 import Ikon from '@/components/Ikon';
-import { StatusPilih, StatusChip, STATUS_STYLE } from '@/components/Status';
+import { StatusPilih, StatusEdit, STATUS_STYLE } from '@/components/Status';
 
 type Urut = 'tenggat-asc' | 'tenggat-desc' | 'dibuat' | 'subbag';
 
@@ -45,7 +46,7 @@ export default function Daftar() {
 
   function cekOleh(): boolean {
     if (!oleh.trim()) {
-      setMsg('Pilih nama pengubah dulu di bagian atas halaman.');
+      tampilkanPesan('Pilih nama pengubah dulu di bagian atas halaman.');
       return false;
     }
     return true;
@@ -59,7 +60,7 @@ export default function Daftar() {
     });
     const j = await r.json();
     if (!r.ok) {
-      setMsg(j.error);
+      tampilkanPesan(j.error);
       return false;
     }
     return true;
@@ -77,12 +78,12 @@ export default function Daftar() {
   function bukaEdit(d: Decision) {
     setEditId(d.id);
     setForm({ isi: d.isi, subbag: d.subbag, pic: d.pic ?? '', tenggat: d.tenggat, status: d.status });
-    setMsg('');
+    tampilkanPesan('');
   }
 
   async function simpanEdit(id: string) {
     if (!cekOleh()) return;
-    if (!form.isi.trim()) return setMsg('Isi keputusan tidak boleh kosong.');
+    if (!form.isi.trim()) return tampilkanPesan('Isi keputusan tidak boleh kosong.');
     setMsg('Menyimpan…');
     if (await kirim({ id, ...form })) {
       setEditId(null);
@@ -177,7 +178,7 @@ export default function Daftar() {
           </div>
 
           <div className="flex flex-col items-start gap-2 lg:items-end">
-            <StatusPilih kecil value={d.status} onChange={(s) => ubahProgres(d.id, s)} />
+            <StatusEdit value={d.status} onChange={(s) => ubahProgres(d.id, s)} />
             <button
               onClick={() => (editId === d.id ? setEditId(null) : bukaEdit(d))}
               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-medium text-stone-700 hover:bg-stone-50"
