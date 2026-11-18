@@ -1,6 +1,6 @@
 import { hariIni, type Decision } from '@/lib/types';
 
-export type Periode = 'semua' | 'bulan' | 'triwulan';
+export type Periode = 'semua' | 'bulan' | 'triwulan' | 'bulanTertentu';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -21,11 +21,12 @@ export function tanggalRapat(d: Decision): string {
   return d.meetings?.tanggal ?? d.created_at.slice(0, 10);
 }
 
-// Cek apakah sebuah tanggal (YYYY-MM-DD) masuk periode yang dipilih.
-export function dalamPeriode(tgl: string, mode: Periode): boolean {
+// Cek apakah tanggal (YYYY-MM-DD) masuk periode. bulanTertentu format YYYY-MM.
+export function dalamPeriode(tgl: string, mode: Periode, bulanTertentu = ''): boolean {
   if (mode === 'semua') return true;
   const today = hariIni();
   if (mode === 'bulan') return tgl.slice(0, 7) === today.slice(0, 7);
+  if (mode === 'bulanTertentu') return !!bulanTertentu && tgl.slice(0, 7) === bulanTertentu;
   const kuartal = (m: string) => Math.floor((+m - 1) / 3);
   return tgl.slice(0, 4) === today.slice(0, 4) && kuartal(tgl.slice(5, 7)) === kuartal(today.slice(5, 7));
 }
