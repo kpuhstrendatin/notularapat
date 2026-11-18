@@ -8,6 +8,8 @@ import { StatusChip } from '@/components/Status';
 type Log = {
   id: number;
   isi: string;
+  jenis: 'status' | 'edit';
+  keterangan: string | null;
   status_lama: Status | null;
   status_baru: Status;
   oleh: string | null;
@@ -35,14 +37,12 @@ export default function Riwayat() {
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
       <h2 className="flex items-center gap-2 text-lg font-bold">
-        <Ikon nama="riwayat" className="h-5 w-5 text-[#7a1f2b]" /> Riwayat perubahan progres
+        <Ikon nama="riwayat" className="h-5 w-5 text-[#7a1f2b]" /> Riwayat perubahan
       </h2>
-      <p className="mt-1 text-sm text-stone-500">100 perubahan terakhir.</p>
+      <p className="mt-1 text-sm text-stone-500">100 perubahan terakhir, termasuk perubahan progres dan isi keputusan.</p>
 
       {rows.length === 0 && (
-        <p className="mt-4 rounded-lg bg-stone-50 p-4 text-stone-500">
-          Belum ada perubahan progres. Riwayat akan muncul setelah progres keputusan diubah.
-        </p>
+        <p className="mt-4 rounded-lg bg-stone-50 p-4 text-stone-500">Belum ada perubahan.</p>
       )}
 
       <div className="mt-3 divide-y">
@@ -57,11 +57,17 @@ export default function Riwayat() {
                 {new Date(l.at).toLocaleString('id-ID', { timeZone: 'Asia/Makassar', dateStyle: 'medium', timeStyle: 'short' })} WITA
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              {l.status_lama ? <StatusChip status={l.status_lama} /> : <span className="text-stone-400">baru</span>}
-              <span className="text-stone-400">→</span>
-              <StatusChip status={l.status_baru} />
-            </div>
+            {l.jenis === 'edit' ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800">
+                <Ikon nama="pensil" className="h-3.5 w-3.5" /> {l.keterangan}
+              </span>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                {l.status_lama ? <StatusChip status={l.status_lama} /> : <span className="text-stone-400">baru</span>}
+                <span className="text-stone-400">→</span>
+                <StatusChip status={l.status_baru} />
+              </div>
+            )}
           </div>
         ))}
       </div>
