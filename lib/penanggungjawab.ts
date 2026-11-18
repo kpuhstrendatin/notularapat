@@ -1,0 +1,35 @@
+// Daftar penanggung jawab orang per subbag.
+export const PJ_SUBBAG: Record<string, string[]> = {
+  'Subbag KUL': [
+    'Arief Fadillah',
+    'Aulia Maghfira Arrum',
+    'Mauritania',
+    'Muhamad Zulfi',
+    'Muhammad Barais',
+    'Muhammad Hary Sabarno',
+    'Muhammad Nazih Mahmudi',
+    'Muhammad Taufiq',
+    'Nadya Awalia Ramadhanti',
+    'Noor Latifah',
+    'Sri Yuliani',
+    'Zulfian Rachmadoni',
+    'Rahmad',
+    'Syarifuddin',
+  ],
+  'Subbag Rendatin': [
+    'Akhmad Muzakir',
+    'Ikhsan Rahmansyah',
+    'Iswahyudi Septian',
+    'Novita Dwi Cahyani',
+    'Robi Salim',
+  ],
+  'Subbag SDM Parmas': ['Agus Arianto', 'Muhammad Ridwan Ramadhani', 'Rias Rana Salsabila'],
+  'Subbag Teknis dan Hukum': [
+    'Muhammad Akmal Al Ghifari',
+    'Muhammad Misbahul Nurrahma',
+    'Muhammad Iqbal',
+    'Reza Juniardi',
+    'Zahwa Rieska Asy Syaima',
+  ],
+  'Semua Subbag': ['Rizkan Yulizar Damhudi'],
+};
