@@ -5,6 +5,7 @@ import { tampilkanPesan } from '@/components/Popup';
 import { LBL, STATUS, SUBBAG, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, unduhCSV } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
+import PilihPJ from '@/components/PilihPJ';
 import { Btn, Cari, Pilih } from '@/components/ui';
 import Ikon from '@/components/Ikon';
 import { StatusPilih, StatusEdit, STATUS_STYLE } from '@/components/Status';
@@ -202,7 +203,7 @@ export default function Daftar() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-stone-500">Penanggung jawab subbag</label>
-              <select className="w-full rounded-lg border p-2" value={form.subbag} onChange={(e) => setForm({ ...form, subbag: e.target.value })}>
+              <select className="w-full rounded-lg border p-2" value={form.subbag} onChange={(e) => setForm({ ...form, subbag: e.target.value, pic: '' })}>
                 {SUBBAG.map((s) => (
                   <option key={s}>{s}</option>
                 ))}
@@ -210,7 +211,7 @@ export default function Daftar() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-stone-500">Penanggung jawab orang (opsional)</label>
-              <PilihPengubah value={form.pic} onChange={(v) => setForm({ ...form, pic: v })} />
+              <PilihPJ subbag={form.subbag} value={form.pic} onChange={(v) => setForm({ ...form, pic: v })} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-stone-500">Tenggat</label>
