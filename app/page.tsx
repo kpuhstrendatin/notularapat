@@ -1,17 +1,26 @@
-import { supabaseAdmin } from '@/lib/supabase';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { LBL, isLate, type Decision } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+export default function Dashboard() {
+  const [rows, setRows] = useState<Decision[] | null>(null);
+  const [err, setErr] = useState('');
 
-export default async function Dashboard() {
-  const { data, error } = await supabaseAdmin()
-    .from('decisions')
-    .select('id, nomor, isi, subbag, pic, tenggat, status, meeting_id')
-    .order('tenggat');
+  useEffect(() => {
+    fetch('/api/decisions', { cache: 'no-store' })
+      .then(async (r) => {
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error ?? 'Gagal memuat');
+        return j as Decision[];
+      })
+      .then(setRows)
+      .catch((e) => setErr(e instanceof Error ? e.message : 'Kesalahan tidak diketahui'));
+  }, []);
 
-  if (error) return <p className="card text-red-700">Gagal memuat data: {error.message}</p>;
+  if (err) return <p className="card text-red-700">Gagal memuat data: {err}</p>;
+  if (!rows) return <p className="card text-stone-500">Memuat data…</p>;
 
-  const rows = (data ?? []) as Decision[];
   const hitung = (f: (d: Decision) => boolean) => rows.filter(f).length;
   const total = rows.length;
   const selesai = hitung((d) => d.status === 'selesai');
