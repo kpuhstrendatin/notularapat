@@ -193,32 +193,31 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <section className={kartu}>
-        <h2 className="flex items-center gap-2 font-bold">
-          <Ikon nama="peringatan" className="h-4 w-4 text-[#7a1f2b]" /> Perhatian Bersama
-          <span className="text-sm font-normal text-stone-500">(untuk Semua Subbag, tampil sampai tanggal yang ditentukan)</span>
-        </h2>
-        <div className="mt-3 divide-y">
-          {bersama.map((d) => (
-            <div key={d.id} className="flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="font-medium">{d.isi}</div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-stone-500">
+      {bersama.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border-2 border-red-600 bg-red-50 shadow-md">
+          <div className="flex items-center gap-3 bg-red-600 px-5 py-3 text-white">
+            <Ikon nama="peringatan" className="h-7 w-7" />
+            <h2 className="text-xl font-extrabold uppercase tracking-wide">Perhatian Bersama</h2>
+          </div>
+          <div className="p-5">
+            <p className="mb-4 text-sm font-bold text-red-700">
+              Mohon perhatikan poin-poin berikut agar tidak terlewat.
+            </p>
+            <div className="space-y-3">
+              {bersama.map((d) => (
+                <div key={d.id} className="rounded-xl border-l-8 border-red-600 bg-white p-4 shadow-sm">
+                  <div className="text-base font-extrabold text-red-800">{d.isi}</div>
                   {d.pic && (
-                    <span className="flex items-center gap-1">
-                      <Ikon nama="orang" className="h-3.5 w-3.5" /> {d.pic}
-                    </span>
+                    <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-stone-700">
+                      <Ikon nama="orang" className="h-4 w-4" /> {d.pic}
+                    </div>
                   )}
-                  <span className="flex items-center gap-1">
-                    <Ikon nama="kalender" className="h-3.5 w-3.5" /> Tampil sampai {fmt(d.tenggat)}
-                  </span>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-          {bersama.length === 0 && <p className="py-2 text-sm text-stone-500">Tidak ada pesan bersama yang sedang ditampilkan.</p>}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={kartu}>
