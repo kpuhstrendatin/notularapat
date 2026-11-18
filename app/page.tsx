@@ -161,7 +161,7 @@ export default function Dashboard() {
   // Perhatian Bersama: tanpa status. Tenggat dipakai sebagai tanggal sampai kapan pesan ditampilkan.
   const bersama = rows
     .filter((d) => d.subbag === 'Semua Subbag' && d.tenggat >= hariIni())
-    .sort((a, b) => a.tenggat.localeCompare(b.tenggat));
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
   const perSubbag = SUBBAG.filter((s) => s !== 'Semua Subbag').map((s) => {
     const items = dipilih.filter((d) => d.subbag === s);
@@ -269,69 +269,98 @@ export default function Dashboard() {
       </section>
 
       {bersama.length > 0 && (
-        <section className="overflow-hidden rounded-2xl border-2 border-red-600 bg-red-50 shadow-md">
-          <div className="flex items-center gap-3 bg-red-600 px-5 py-3 text-white">
-            <Ikon nama="peringatan" className="h-7 w-7" />
-            <h2 className="text-xl font-extrabold uppercase tracking-wide">Perhatian Bersama</h2>
+        <section className="overflow-hidden rounded-3xl border-2 border-red-600 bg-white shadow-xl ring-4 ring-red-600/10">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-red-700 to-red-600 px-6 py-5 text-white">
+            <div className="flex items-center gap-4">
+              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/15">
+                <Ikon nama="peringatan" className="h-8 w-8" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black uppercase tracking-wider">Perhatian Bersama</h2>
+                <p className="text-sm font-semibold text-white/90">Wajib dibaca oleh seluruh pegawai</p>
+              </div>
+            </div>
+            <span className="rounded-full bg-white px-4 py-1.5 text-sm font-bold text-red-700">{bersama.length} pesan</span>
           </div>
-          <div className="p-5">
-            <p className="mb-4 text-sm font-bold text-red-700">Mohon perhatikan poin-poin berikut agar tidak terlewat.</p>
-            <div className="space-y-3">
-              {bersama.map((d) => {
-                const sudah = baca[d.id] ?? [];
-                const namaSudah = sudah.map((x) => x.nama);
-                const belum = pengubahList.filter((n) => !namaSudah.includes(n));
-                const sudahSaya = !!oleh && namaSudah.includes(oleh);
-                return (
-                  <div key={d.id} className="rounded-xl border-l-8 border-red-600 bg-white p-4 shadow-sm">
-                    <div className="text-base font-extrabold text-red-800">{d.isi}</div>
-                    {d.pic && (
-                      <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-stone-700">
-                        <Ikon nama="orang" className="h-4 w-4" /> {d.pic}
+
+          <div className="space-y-5 p-6">
+            {bersama.map((d, idx) => {
+              const sudah = [...(baca[d.id] ?? [])].sort((x, y) => y.at.localeCompare(x.at));
+              const namaSudah = sudah.map((x) => x.nama);
+              const belum = pengubahList.filter((n) => !namaSudah.includes(n)).sort((x, y) => x.localeCompare(y));
+              const sudahSaya = !!oleh && namaSudah.includes(oleh);
+              return (
+                <div key={d.id} className="rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-white p-5">
+                  <div className="flex items-start gap-4">
+                    <span className="grid h-9 w-9 flex-none place-items-center rounded-full bg-red-600 text-base font-black text-white shadow">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-lg font-extrabold leading-snug text-red-800">{d.isi}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500">
+                        {d.pic && (
+                          <span className="flex items-center gap-1.5 text-sm font-semibold text-stone-700">
+                            <Ikon nama="orang" className="h-4 w-4" /> {d.pic}
+                          </span>
+                        )}
+                        <span>Dibuat {fmt(d.created_at.slice(0, 10))}</span>
                       </div>
-                    )}
-                    <div className="mt-4 grid gap-4 md:grid-cols-2">
-                      <div>
-                        <div className="text-xs font-bold uppercase tracking-wide text-emerald-700">Sudah dibaca ({sudah.length})</div>
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                          {sudah.map((x) => (
-                            <span key={x.nama} className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                              {x.nama}
-                            </span>
-                          ))}
-                          {sudah.length === 0 && <span className="text-xs text-stone-500">Belum ada</span>}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold uppercase tracking-wide text-red-700">Belum dibaca ({belum.length})</div>
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                          {belum.map((n) => (
-                            <span key={n} className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">
-                              {n}
-                            </span>
-                          ))}
-                          {belum.length === 0 && <span className="text-xs text-stone-500">Semua sudah membaca</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      {sudahSaya ? (
-                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
-                          <Ikon nama="cek" className="h-4 w-4" /> Anda sudah membaca
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => tandaiBaca(d.id)}
-                          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-700"
-                        >
-                          Saya sudah membaca
-                        </button>
-                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  <div className="mt-4 space-y-2">
+                    <details className="group rounded-xl border border-emerald-200 bg-white">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-emerald-700 [&::-webkit-details-marker]:hidden">
+                        <span className="flex items-center gap-2">
+                          <Ikon nama="cek" className="h-4 w-4" /> Sudah dibaca ({sudah.length})
+                        </span>
+                        <span className="text-stone-400 transition group-open:rotate-180">▾</span>
+                      </summary>
+                      <div className="flex flex-wrap gap-1.5 px-4 pb-4">
+                        {sudah.map((x) => (
+                          <span key={x.nama} className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                            {x.nama}
+                          </span>
+                        ))}
+                        {sudah.length === 0 && <span className="text-xs text-stone-500">Belum ada</span>}
+                      </div>
+                    </details>
+
+                    <details className="group rounded-xl border border-red-200 bg-white">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-red-700 [&::-webkit-details-marker]:hidden">
+                        <span className="flex items-center gap-2">
+                          <Ikon nama="peringatan" className="h-4 w-4" /> Belum dibaca ({belum.length})
+                        </span>
+                        <span className="text-stone-400 transition group-open:rotate-180">▾</span>
+                      </summary>
+                      <div className="flex flex-wrap gap-1.5 px-4 pb-4">
+                        {belum.map((n) => (
+                          <span key={n} className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">
+                            {n}
+                          </span>
+                        ))}
+                        {belum.length === 0 && <span className="text-xs text-stone-500">Semua sudah membaca</span>}
+                      </div>
+                    </details>
+                  </div>
+
+                  <div className="mt-4">
+                    {sudahSaya ? (
+                      <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+                        <Ikon nama="cek" className="h-4 w-4" /> Anda sudah membaca
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => tandaiBaca(d.id)}
+                        className="rounded-xl bg-gradient-to-r from-red-700 to-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+                      >
+                        Saya sudah membaca
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
