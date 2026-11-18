@@ -3,13 +3,13 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-// 100 perubahan status terakhir, lengkap dengan isi keputusannya.
+// 100 perubahan terakhir (status dan edit), lengkap dengan isi keputusannya.
 export async function GET() {
   const db = supabaseAdmin();
 
   const { data: log, error } = await db
     .from('decision_log')
-    .select('id, decision_id, status_lama, status_baru, oleh, at')
+    .select('id, decision_id, status_lama, status_baru, oleh, at, jenis, keterangan')
     .order('at', { ascending: false })
     .limit(100);
   if (error) return NextResponse.json({ error: 'Gagal membaca riwayat: ' + error.message }, { status: 500 });
