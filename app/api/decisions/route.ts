@@ -17,7 +17,7 @@ export async function GET() {
   return NextResponse.json(data);
 }
 
-// Simpan rapat (opsional) dan keputusan-keputusannya.
+// Simpan keputusan ke notula (nama + tanggal). Notula yang sudah ada dipakai lagi.
 export async function POST(req: Request) {
   const body = await req.json();
   const items: any[] = body.items ?? [];
@@ -33,7 +33,6 @@ export async function POST(req: Request) {
   const db = supabaseAdmin();
   let meetingId: string | null = body.meeting_id ?? null;
 
-  // Satu notula = kombinasi nama dan tanggal. Kalau sudah ada, dipakai lagi (tidak dobel).
   if (!meetingId && body.meeting?.judul) {
     const judul = String(body.meeting.judul).trim();
     const tgl: string | null = body.meeting.tanggal || null;
@@ -47,11 +46,7 @@ export async function POST(req: Request) {
     if (ada) {
       meetingId = ada.id;
     } else {
-      const { data, error } = await db
-        .from('meetings')
-        .insert({ judul, tanggal: tgl })
-        .select('id')
-        .single();
+      const { data, error } = await db.from('meetings').insert({ judul, tanggal: tgl }).select('id').single();
       if (error) return bad(error.message);
       meetingId = data.id;
     }
@@ -74,13 +69,22 @@ export async function POST(req: Request) {
 }
 
 // Ubah satu keputusan. Hanya field yang dikirim yang diubah.
-// Perubahan status otomatis dicatat di riwayat oleh trigger.
+// Perubahan status dicatat oleh trigger; perubahan isi, PJ, dan tenggat dicatat di sini.
 export async function PATCH(req: Request) {
   const b = await req.json();
   if (!b.oleh?.trim()) return bad('Nama pengubah wajib diisi.');
   if (!b.id) return bad('Keputusan tidak ditemukan.');
 
-  const upd: Record<string, unknown> = { updated_by: b.oleh.trim() };
+  const db = supabaseAdmin();
+  const { data: lama, error: e0 } = await db
+    .from('decisions')
+    .select('isi, subbag, pic, tenggat, status')
+    .eq('id', b.id)
+    .single();
+  if (e0 || !lama) return bad('Keputusan tidak ditemukan.');
+
+  const oleh = b.oleh.trim();
+  const upd: Record<string, unknown> = { updated_by: oleh };
 
   if (b.isi !== undefined) {
     if (!String(b.isi).trim()) return bad('Isi keputusan tidak boleh kosong.');
@@ -100,7 +104,33 @@ export async function PATCH(req: Request) {
     upd.status = b.status;
   }
 
-  const { error } = await supabaseAdmin().from('decisions').update(upd).eq('id', b.id);
+  const { error } = await db.from('decisions').update(upd).eq('id', b.id);
   if (error) return bad(error.message);
+
+  // Catat perubahan isi, penanggung jawab, dan tenggat ke riwayat
+  const catatan: string[] = [];
+  if (upd.isi !== undefined && upd.isi !== lama.isi) catatan.push('Isi keputusan diubah');
+  if (upd.subbag !== undefined && upd.subbag !== lama.subbag) {
+    catatan.push(`Penanggung jawab subbag: ${lama.subbag} → ${upd.subbag}`);
+  }
+  if ('pic' in upd && (upd.pic ?? null) !== (lama.pic ?? null)) {
+    catatan.push(`Penanggung jawab orang: ${lama.pic ?? '—'} → ${upd.pic ?? '—'}`);
+  }
+  if (upd.tenggat !== undefined && upd.tenggat !== lama.tenggat) {
+    catatan.push(`Tenggat: ${lama.tenggat} → ${upd.tenggat}`);
+  }
+  if (catatan.length) {
+    await db.from('decision_log').insert(
+      catatan.map((k) => ({
+        decision_id: b.id,
+        status_lama: lama.status,
+        status_baru: lama.status,
+        oleh,
+        jenis: 'edit',
+        keterangan: k,
+      })),
+    );
+  }
+
   return NextResponse.json({ ok: true });
 }
