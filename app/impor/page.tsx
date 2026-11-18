@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { SUBBAG, type Draft } from '@/lib/types';
 
 type Rapat = { id: string; judul: string; tanggal: string | null; updated_at: string };
@@ -34,6 +34,21 @@ export default function Impor() {
   useEffect(() => {
     muatRapat();
   }, []);
+
+  // Unggah file .docx / .txt / .md, lalu isi kotak teks dengan hasilnya.
+  async function unggah(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMsg('Membaca file…');
+    const fd = new FormData();
+    fd.append('file', file);
+    const r = await fetch('/api/extract', { method: 'POST', body: fd });
+    const j = await r.json();
+    e.target.value = '';
+    if (!r.ok) return setMsg(j.error);
+    setTeks(j.teks);
+    setMsg('File terbaca. Klik Cari keputusan.');
+  }
 
   async function cari() {
     setBusy(true);
@@ -130,6 +145,19 @@ export default function Impor() {
           value={oleh}
           onChange={(e) => setOleh(e.target.value)}
         />
+
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="cursor-pointer rounded-lg border px-3 py-2 text-sm hover:bg-stone-50">
+            Pilih file (.docx, .txt, .md)
+            <input
+              type="file"
+              accept=".docx,.txt,.md"
+              onChange={unggah}
+              className="hidden"
+            />
+          </label>
+          <span className="text-sm text-stone-500">atau tempel teks di bawah</span>
+        </div>
 
         <textarea
           className="min-h-40 w-full rounded-lg border p-2"
