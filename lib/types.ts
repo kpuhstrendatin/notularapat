@@ -25,6 +25,9 @@ export type Decision = {
   tenggat: string; // YYYY-MM-DD
   status: Status;
   meeting_id: string | null;
+  created_at: string;
+  updated_by: string | null;
+  meetings: { judul: string; tanggal: string | null } | null;
 };
 
 export type Draft = { isi: string; subbag: string; tenggat: string; on: boolean };
