@@ -31,5 +31,11 @@ export const PJ_SUBBAG: Record<string, string[]> = {
     'Reza Juniardi',
     'Zahwa Rieska Asy Syaima',
   ],
-  'Semua Subbag': ['Rizkan Yulizar Damhudi'],
+  'Semua Subbag': [
+    'Agus Arianto',
+    'Novita Dwi Cahyani',
+    'Reza Juniardi',
+    'Rizkan Yulizar Damhudi',
+    'Zulfian Rachmadoni',
+  ],
 };
