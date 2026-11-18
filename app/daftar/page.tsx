@@ -5,6 +5,7 @@ import { tampilkanPesan } from '@/components/Popup';
 import { LBL, STATUS, SUBBAG, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, unduhCSV } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
+import { Btn, Cari, Pilih } from '@/components/ui';
 import Ikon from '@/components/Ikon';
 import { StatusPilih, StatusEdit, STATUS_STYLE } from '@/components/Status';
 
@@ -241,27 +242,20 @@ export default function Daftar() {
             <Ikon nama="daftar" className="h-5 w-5 text-[#7a1f2b]" /> Daftar Keputusan
             <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-sm font-semibold text-stone-600">{tampil.length}</span>
           </h2>
-          <button onClick={ekspor} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-stone-50">
-            <Ikon nama="unduh" className="h-4 w-4" /> Ekspor ke Excel (CSV)
-          </button>
+          <Btn variant="garis" onClick={ekspor}><Ikon nama="unduh" className="h-4 w-4" /> Ekspor ke Excel (CSV)</Btn>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-6">
-          <input
-            className="rounded-lg border p-2 md:col-span-2"
-            placeholder="Cari keputusan, notula, subbag, atau nama"
-            value={cari}
-            onChange={(e) => setCari(e.target.value)}
-          />
-          <select className="rounded-lg border p-2" value={subbag} onChange={(e) => setSubbag(e.target.value)}>
+        <div className="mt-4 grid gap-3 md:grid-cols-12">
+          <Cari value={cari} onChange={setCari} placeholder="Cari keputusan, notula, subbag, atau nama" className="md:col-span-4" />
+          <Pilih value={subbag} onChange={(e) => setSubbag(e.target.value)} className="md:col-span-2">
             <option value="">Semua subbag</option>
             {SUBBAG.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
             ))}
-          </select>
-          <select className="rounded-lg border p-2" value={filter} onChange={(e) => setFilter(e.target.value)}>
+          </Pilih>
+          <Pilih value={filter} onChange={(e) => setFilter(e.target.value)} className="md:col-span-2">
             <option value="">Semua progres</option>
             {STATUS.map((s) => (
               <option key={s} value={s}>
@@ -269,18 +263,32 @@ export default function Daftar() {
               </option>
             ))}
             <option value="terlambat">Terlambat</option>
-          </select>
-          <select className="rounded-lg border p-2" value={urut} onChange={(e) => setUrut(e.target.value as Urut)}>
+          </Pilih>
+          <Pilih value={urut} onChange={(e) => setUrut(e.target.value as Urut)} className="md:col-span-2">
             {(Object.keys(URUT_LABEL) as Urut[]).map((u) => (
               <option key={u} value={u}>
                 Urut: {URUT_LABEL[u]}
               </option>
             ))}
-          </select>
-          <label className="flex items-center gap-2 rounded-lg border p-2 text-sm">
-            <input type="checkbox" checked={kelompok} onChange={(e) => setKelompok(e.target.checked)} />
+          </Pilih>
+          <button
+            type="button"
+            onClick={() => setKelompok(!kelompok)}
+            className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition md:col-span-2 ${
+              kelompok
+                ? 'border-[#7a1f2b] bg-[#7a1f2b]/5 text-[#7a1f2b]'
+                : 'border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50'
+            }`}
+          >
+            <span
+              className={`grid h-5 w-5 place-items-center rounded-md border ${
+                kelompok ? 'border-[#7a1f2b] bg-[#7a1f2b] text-white' : 'border-stone-300'
+              }`}
+            >
+              {kelompok && <Ikon nama="cek" className="h-3 w-3" />}
+            </span>
             Per notula
-          </label>
+          </button>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
