@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { tampilkanPesan } from '@/components/Popup';
 import { SUBBAG, LBL, STATUS, hariIni, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, tambahHari, tanggalRapat, dalamPeriode, type Periode } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
 import Ikon from '@/components/Ikon';
-import { StatusPilih, StatusChip } from '@/components/Status';
+import { StatusChip, StatusEdit } from '@/components/Status';
 
 type Log = {
   id: number;
@@ -59,7 +60,7 @@ export default function Dashboard() {
   }, []);
 
   async function ubahProgres(id: string, status: Status) {
-    if (!oleh.trim()) return setMsg('Pilih nama pengubah dulu di bagian atas halaman.');
+    if (!oleh.trim()) return tampilkanPesan('Pilih nama pengubah dulu di bagian atas halaman.');
     setMsg('Menyimpan…');
     const r = await fetch('/api/decisions', {
       method: 'PATCH',
@@ -67,7 +68,7 @@ export default function Dashboard() {
       body: JSON.stringify({ id, status, oleh }),
     });
     const j = await r.json();
-    if (!r.ok) return setMsg(j.error);
+    if (!r.ok) return tampilkanPesan(j.error);
     setMsg('Progres diperbarui.');
     muat();
   }
@@ -109,7 +110,12 @@ export default function Dashboard() {
   const terlambatList = dipilih.filter(isLate).sort((a, b) => a.tenggat.localeCompare(b.tenggat)).slice(0, 5);
   const terbaru = [...dipilih].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5);
 
-  const perSubbag = SUBBAG.map((s) => {
+  // Perhatian Bersama: tanpa status. Tenggat dipakai sebagai tanggal sampai kapan pesan ditampilkan.
+  const bersama = rows
+    .filter((d) => d.subbag === 'Semua Subbag' && d.tenggat >= hariIni())
+    .sort((a, b) => a.tenggat.localeCompare(b.tenggat));
+
+  const perSubbag = SUBBAG.filter((s) => s !== 'Semua Subbag').map((s) => {
     const items = dipilih.filter((d) => d.subbag === s);
     return { s, n: items.length, seg: STATUS.map((st) => ({ st, n: items.filter((d) => d.status === st).length })) };
   }).filter((x) => x.n > 0);
@@ -187,6 +193,33 @@ export default function Dashboard() {
         </div>
       </section>
 
+      <section className={kartu}>
+        <h2 className="flex items-center gap-2 font-bold">
+          <Ikon nama="peringatan" className="h-4 w-4 text-[#7a1f2b]" /> Perhatian Bersama
+          <span className="text-sm font-normal text-stone-500">(untuk Semua Subbag, tampil sampai tanggal yang ditentukan)</span>
+        </h2>
+        <div className="mt-3 divide-y">
+          {bersama.map((d) => (
+            <div key={d.id} className="flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{d.isi}</div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-stone-500">
+                  {d.pic && (
+                    <span className="flex items-center gap-1">
+                      <Ikon nama="orang" className="h-3.5 w-3.5" /> {d.pic}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <Ikon nama="kalender" className="h-3.5 w-3.5" /> Tampil sampai {fmt(d.tenggat)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {bersama.length === 0 && <p className="py-2 text-sm text-stone-500">Tidak ada pesan bersama yang sedang ditampilkan.</p>}
+        </div>
+      </section>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={kartu}>
           <h2 className="font-bold">Ringkasan per notula</h2>
@@ -223,7 +256,7 @@ export default function Dashboard() {
                 </div>
                 <div className="mt-1 font-medium">{d.isi}</div>
                 <div className="mt-2">
-                  <StatusPilih kecil value={d.status} onChange={(s) => ubahProgres(d.id, s)} />
+                  <StatusEdit value={d.status} onChange={(s) => ubahProgres(d.id, s)} />
                 </div>
               </div>
             ))}
@@ -245,7 +278,7 @@ export default function Dashboard() {
                   <span className="flex items-center gap-1"><Ikon nama="kalender" className="h-3.5 w-3.5" />{fmt(d.tenggat)}</span>
                 </div>
                 <div className="mt-2">
-                  <StatusPilih kecil value={d.status} onChange={(s) => ubahProgres(d.id, s)} />
+                  <StatusEdit value={d.status} onChange={(s) => ubahProgres(d.id, s)} />
                 </div>
               </div>
             ))}
