@@ -33,14 +33,28 @@ export async function POST(req: Request) {
   const db = supabaseAdmin();
   let meetingId: string | null = body.meeting_id ?? null;
 
+  // Satu notula = kombinasi nama dan tanggal. Kalau sudah ada, dipakai lagi (tidak dobel).
   if (!meetingId && body.meeting?.judul) {
-    const { data, error } = await db
-      .from('meetings')
-      .insert({ judul: body.meeting.judul, tanggal: body.meeting.tanggal || null })
-      .select('id')
-      .single();
-    if (error) return bad(error.message);
-    meetingId = data.id;
+    const judul = String(body.meeting.judul).trim();
+    const tgl: string | null = body.meeting.tanggal || null;
+    if (!judul) return bad('Nama notula wajib diisi.');
+
+    let q = db.from('meetings').select('id').eq('judul', judul);
+    q = tgl ? q.eq('tanggal', tgl) : q.is('tanggal', null);
+    const { data: ada, error: e1 } = await q.limit(1).maybeSingle();
+    if (e1) return bad(e1.message);
+
+    if (ada) {
+      meetingId = ada.id;
+    } else {
+      const { data, error } = await db
+        .from('meetings')
+        .insert({ judul, tanggal: tgl })
+        .select('id')
+        .single();
+      if (error) return bad(error.message);
+      meetingId = data.id;
+    }
   }
 
   const rows = items.map((it, i) => ({
