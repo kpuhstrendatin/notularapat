@@ -5,7 +5,7 @@ import { tampilkanPesan } from '@/components/Popup';
 import { SUBBAG, LBL, STATUS, hariIni, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, tambahHari, tanggalRapat, dalamPeriode, type Periode } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
-import { Pilih, fieldCls } from '@/components/ui';
+import { Pilih, Btn, fieldCls } from '@/components/ui';
 import Ikon from '@/components/Ikon';
 import { StatusChip, StatusEdit } from '@/components/Status';
 
@@ -27,11 +27,19 @@ const WARNA: Record<Status, string> = {
 
 const kartu = 'rounded-2xl border border-stone-200 bg-white p-5 shadow-sm';
 
+// Selisih hari dari hari ini ke tanggal (YYYY-MM-DD)
+const hariLagi = (tgl: string) =>
+  Math.round((Date.parse(tgl + 'T00:00:00') - Date.parse(hariIni() + 'T00:00:00')) / 86400000);
+
 export default function Dashboard() {
   const [rows, setRows] = useState<Decision[] | null>(null);
   const [periode, setPeriode] = useState<Periode>('semua');
   const [bulanPilih, setBulanPilih] = useState(hariIni().slice(0, 7));
   const [dasar, setDasar] = useState<'rapat' | 'dibuat'>('rapat');
+  const [picFilter, setPicFilter] = useState('');
+  const [pengubahList, setPengubahList] = useState<string[]>([]);
+  const [baca, setBaca] = useState<Record<string, { nama: string; at: string }[]>>({});
+  const [notif, setNotif] = useState('default');
   const [oleh, setOleh] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -48,7 +56,39 @@ export default function Dashboard() {
 
   useEffect(() => {
     muat();
+    fetch('/api/pengubah', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((j) => setPengubahList(Array.isArray(j) ? j : []));
   }, []);
+
+  // Status "sudah dibaca" untuk Perhatian Bersama
+  useEffect(() => {
+    if (!rows) return;
+    const ids = rows
+      .filter((d) => d.subbag === 'Semua Subbag' && d.tenggat >= hariIni())
+      .map((d) => d.id);
+    if (!ids.length) return;
+    fetch('/api/baca?ids=' + ids.join(','), { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((j) => setBaca(j && !j.error ? j : {}));
+  }, [rows]);
+
+  // Pengingat: notifikasi browser sekali sehari untuk keputusan yang jatuh tempo dalam 3 hari
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setNotif('unsupported');
+      return;
+    }
+    setNotif(Notification.permission);
+    if (!rows || Notification.permission !== 'granted') return;
+    const kunci = 'pengingat-' + hariIni();
+    if (localStorage.getItem(kunci)) return;
+    const n = rows.filter((d) => d.status !== 'selesai' && hariLagi(d.tenggat) >= 0 && hariLagi(d.tenggat) <= 3).length;
+    if (n > 0) {
+      new Notification('Decision Tracker', { body: `${n} keputusan jatuh tempo dalam 3 hari.` });
+      localStorage.setItem(kunci, '1');
+    }
+  }, [rows]);
 
   async function ubahProgres(id: string, status: Status) {
     if (!oleh.trim()) return tampilkanPesan('Pilih nama pengubah dulu di bagian atas halaman.');
@@ -64,11 +104,27 @@ export default function Dashboard() {
     muat();
   }
 
+  async function tandaiBaca(id: string) {
+    if (!oleh.trim()) return tampilkanPesan('Pilih nama pengubah terlebih dahulu di bagian atas halaman.');
+    const r = await fetch('/api/baca', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision_id: id, nama: oleh }),
+    });
+    const j = await r.json();
+    if (!r.ok) return tampilkanPesan(j.error);
+    const b = await fetch('/api/baca?ids=' + id, { cache: 'no-store' }).then((x) => x.json());
+    setBaca((cur) => ({ ...cur, [id]: b[id] ?? cur[id] ?? [] }));
+  }
+
   if (err) return <p className="rounded-2xl bg-red-50 p-4 text-red-700">Gagal memuat data: {err}</p>;
   if (!rows) return <p className="rounded-2xl bg-white p-4 text-stone-500 shadow-sm">Memuat data…</p>;
 
   const tglDasar = (d: Decision) => (dasar === 'rapat' ? tanggalRapat(d) : d.created_at.slice(0, 10));
-  const dipilih = rows.filter((d) => dalamPeriode(tglDasar(d), periode, bulanPilih));
+  const dipilih = rows.filter(
+    (d) => dalamPeriode(tglDasar(d), periode, bulanPilih) && (!picFilter || d.pic === picFilter),
+  );
+  const daftarPic = Array.from(new Set(rows.map((d) => d.pic).filter((x): x is string => !!x))).sort();
   const total = dipilih.length;
   const cnt = (s: Status) => dipilih.filter((d) => d.status === s).length;
   const nLate = dipilih.filter(isLate).length;
@@ -132,6 +188,22 @@ export default function Dashboard() {
             <option value="rapat">Dihitung dari tanggal rapat</option>
             <option value="dibuat">Dihitung dari tanggal dibuat</option>
           </Pilih>
+          <Pilih value={picFilter} onChange={(e) => setPicFilter(e.target.value)} className="w-56">
+            <option value="">Semua penanggung jawab</option>
+            {daftarPic.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </Pilih>
+          {notif !== 'granted' && notif !== 'unsupported' && (
+            <Btn
+              variant="garis"
+              onClick={async () => setNotif(await Notification.requestPermission())}
+            >
+              <Ikon nama="peringatan" className="h-4 w-4" /> Aktifkan pengingat
+            </Btn>
+          )}
         </div>
         <div className="w-full md:w-80">
           <label className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-stone-500">
@@ -179,7 +251,10 @@ export default function Dashboard() {
               <div className="flex justify-between text-sm">
                 <span className="font-medium">{x.s}</span>
                 <span className="text-stone-500">
-                  {x.seg.find((g) => g.st === 'selesai')?.n ?? 0} dari {x.n} selesai
+                  {x.seg.find((g) => g.st === 'selesai')?.n ?? 0} dari {x.n} selesai ·{' '}
+                  <b className="text-stone-900">
+                    {Math.round(((x.seg.find((g) => g.st === 'selesai')?.n ?? 0) / x.n) * 100)}%
+                  </b>
                 </span>
               </div>
               <div className="mt-1 flex h-3 overflow-hidden rounded-full bg-stone-200">
@@ -200,20 +275,62 @@ export default function Dashboard() {
             <h2 className="text-xl font-extrabold uppercase tracking-wide">Perhatian Bersama</h2>
           </div>
           <div className="p-5">
-            <p className="mb-4 text-sm font-bold text-red-700">
-              Mohon perhatikan poin-poin berikut agar tidak terlewat.
-            </p>
+            <p className="mb-4 text-sm font-bold text-red-700">Mohon perhatikan poin-poin berikut agar tidak terlewat.</p>
             <div className="space-y-3">
-              {bersama.map((d) => (
-                <div key={d.id} className="rounded-xl border-l-8 border-red-600 bg-white p-4 shadow-sm">
-                  <div className="text-base font-extrabold text-red-800">{d.isi}</div>
-                  {d.pic && (
-                    <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-stone-700">
-                      <Ikon nama="orang" className="h-4 w-4" /> {d.pic}
+              {bersama.map((d) => {
+                const sudah = baca[d.id] ?? [];
+                const namaSudah = sudah.map((x) => x.nama);
+                const belum = pengubahList.filter((n) => !namaSudah.includes(n));
+                const sudahSaya = !!oleh && namaSudah.includes(oleh);
+                return (
+                  <div key={d.id} className="rounded-xl border-l-8 border-red-600 bg-white p-4 shadow-sm">
+                    <div className="text-base font-extrabold text-red-800">{d.isi}</div>
+                    {d.pic && (
+                      <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-stone-700">
+                        <Ikon nama="orang" className="h-4 w-4" /> {d.pic}
+                      </div>
+                    )}
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-emerald-700">Sudah dibaca ({sudah.length})</div>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {sudah.map((x) => (
+                            <span key={x.nama} className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                              {x.nama}
+                            </span>
+                          ))}
+                          {sudah.length === 0 && <span className="text-xs text-stone-500">Belum ada</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-red-700">Belum dibaca ({belum.length})</div>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {belum.map((n) => (
+                            <span key={n} className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">
+                              {n}
+                            </span>
+                          ))}
+                          {belum.length === 0 && <span className="text-xs text-stone-500">Semua sudah membaca</span>}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                    <div className="mt-4">
+                      {sudahSaya ? (
+                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
+                          <Ikon nama="cek" className="h-4 w-4" /> Anda sudah membaca
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => tandaiBaca(d.id)}
+                          className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-700"
+                        >
+                          Saya sudah membaca
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -227,16 +344,27 @@ export default function Dashboard() {
               const sel = g.items.filter((d) => d.status === 'selesai').length;
               const p = Math.round((sel / g.items.length) * 100);
               return (
-                <div key={i}>
-                  <div className="flex justify-between gap-2 text-sm">
-                    <span className="font-medium">{g.judul}</span>
-                    <span className="text-stone-500">
-                      {g.tanggal ? fmt(g.tanggal) + ' · ' : ''}
-                      {sel} dari {g.items.length} selesai
-                    </span>
+                <div key={i} className="rounded-xl border border-stone-200 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-stone-900">{g.judul}</div>
+                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-stone-500">
+                        <Ikon nama="kalender" className="h-3.5 w-3.5" />
+                        {g.tanggal ? fmt(g.tanggal) : 'Tanpa tanggal'}
+                      </div>
+                    </div>
+                    <div className="flex-none text-right">
+                      <div className="text-2xl font-extrabold leading-none text-[#7a1f2b]">{p}%</div>
+                      <div className="mt-1 text-xs text-stone-500">
+                        {sel} dari {g.items.length} selesai
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-stone-200">
-                    <div className="h-full rounded-full bg-[#7a1f2b]" style={{ width: `${p}%` }} />
+                  <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-stone-200">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#7a1f2b] to-[#b13a48]"
+                      style={{ width: `${p}%` }}
+                    />
                   </div>
                 </div>
               );
@@ -275,6 +403,11 @@ export default function Dashboard() {
                   <span className="flex items-center gap-1"><Ikon nama="gedung" className="h-3.5 w-3.5" />{d.subbag}</span>
                   {d.pic && <span className="flex items-center gap-1"><Ikon nama="orang" className="h-3.5 w-3.5" />{d.pic}</span>}
                   <span className="flex items-center gap-1"><Ikon nama="kalender" className="h-3.5 w-3.5" />{fmt(d.tenggat)}</span>
+                  {hariLagi(d.tenggat) <= 3 && (
+                    <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                      {hariLagi(d.tenggat) === 0 ? 'HARI INI' : `H-${hariLagi(d.tenggat)}`}
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2">
                   <StatusEdit value={d.status} onChange={(s) => ubahProgres(d.id, s)} />
