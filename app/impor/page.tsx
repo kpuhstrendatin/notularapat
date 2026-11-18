@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ChangeEvent } from 'react';
+import { tampilkanPesan } from '@/components/Popup';
 import { SUBBAG, type Draft } from '@/lib/types';
 import PilihPengubah from '@/components/PilihPengubah';
 import Ikon from '@/components/Ikon';
@@ -52,7 +53,7 @@ export default function TambahKeputusan() {
     if (pilihNotula !== BARU) return pilihNotula || null;
     const nama = namaBaru.trim();
     if (!nama) {
-      setMsg('Isi nama notula baru.');
+      tampilkanPesan('Isi nama notula baru.');
       return null;
     }
     const r = await fetch('/api/notula', {
@@ -62,7 +63,7 @@ export default function TambahKeputusan() {
     });
     const j = await r.json();
     if (!r.ok) {
-      setMsg(j.error);
+      tampilkanPesan(j.error);
       return null;
     }
     return nama;
@@ -77,7 +78,7 @@ export default function TambahKeputusan() {
     const r = await fetch('/api/extract', { method: 'POST', body: fd });
     const j = await r.json();
     e.target.value = '';
-    if (!r.ok) return setMsg(j.error);
+    if (!r.ok) return tampilkanPesan(j.error);
     setTeks(j.teks);
     setMsg('File terbaca. Klik Cari keputusan.');
   }
@@ -92,7 +93,7 @@ export default function TambahKeputusan() {
     });
     const j = await r.json();
     setBusy(false);
-    if (!r.ok) return setMsg(j.error);
+    if (!r.ok) return tampilkanPesan(j.error);
     setDrafts(j.drafts.map((x: Omit<Draft, 'on'>) => ({ ...x, on: true })));
     setMsg(`${j.drafts.length} draf ditemukan. Periksa sebelum disimpan.`);
   }
@@ -104,11 +105,11 @@ export default function TambahKeputusan() {
   // Cek data bagian atas. Mengembalikan nama notula kalau lengkap.
   async function cekAtas(): Promise<string | null> {
     if (!oleh.trim()) {
-      setMsg('Pilih nama pengubah dulu.');
+      tampilkanPesan('Pilih nama pengubah dulu.');
       return null;
     }
     if (!tanggal) {
-      setMsg('Isi tanggal pembahasan.');
+      tampilkanPesan('Isi tanggal pembahasan.');
       return null;
     }
     return ambilNamaNotula();
@@ -122,7 +123,7 @@ export default function TambahKeputusan() {
     });
     const j = await r.json();
     if (!r.ok) {
-      setMsg(j.error);
+      tampilkanPesan(j.error);
       return null;
     }
     return j;
@@ -132,8 +133,8 @@ export default function TambahKeputusan() {
     const judul = await cekAtas();
     if (!judul) return;
     const items = drafts.filter((d) => d.on);
-    if (!items.length) return setMsg('Tidak ada yang dicentang.');
-    if (items.some((d) => !d.subbag || !d.tenggat)) return setMsg('Lengkapi penanggung jawab dan tenggat.');
+    if (!items.length) return tampilkanPesan('Tidak ada yang dicentang.');
+    if (items.some((d) => !d.subbag || !d.tenggat)) return tampilkanPesan('Lengkapi penanggung jawab dan tenggat.');
 
     const j = await kirim(judul, items);
     if (!j) return;
@@ -147,9 +148,9 @@ export default function TambahKeputusan() {
   async function simpanManual() {
     const judul = await cekAtas();
     if (!judul) return;
-    if (!isiM.trim()) return setMsg('Isi keputusannya.');
-    if (!subbagM) return setMsg('Pilih penanggung jawab.');
-    if (!tenggatM) return setMsg('Isi tenggat.');
+    if (!isiM.trim()) return tampilkanPesan('Isi keputusannya.');
+    if (!subbagM) return tampilkanPesan('Pilih penanggung jawab.');
+    if (!tenggatM) return tampilkanPesan('Isi tenggat.');
 
     const j = await kirim(judul, [{ isi: isiM.trim(), subbag: subbagM, tenggat: tenggatM, status: 'belum' }]);
     if (!j) return;
@@ -175,10 +176,10 @@ export default function TambahKeputusan() {
           <Ikon nama="tambah" className="h-5 w-5 text-[#7a1f2b]" /> Tambah keputusan
         </h2>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button className={tab(mode === 'notula')} onClick={() => { setMode('notula'); setMsg(''); }}>
+          <button className={tab(mode === 'notula')} onClick={() => { setMode('notula'); tampilkanPesan(''); }}>
             <Ikon nama="dokumen" className="h-4 w-4" /> Impor dari notula
           </button>
-          <button className={tab(mode === 'manual')} onClick={() => { setMode('manual'); setMsg(''); }}>
+          <button className={tab(mode === 'manual')} onClick={() => { setMode('manual'); tampilkanPesan(''); }}>
             <Ikon nama="pensil" className="h-4 w-4" /> Tambah manual
           </button>
         </div>
