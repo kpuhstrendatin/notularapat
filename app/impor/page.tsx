@@ -3,6 +3,7 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 import { SUBBAG, type Draft } from '@/lib/types';
 import PilihPengubah from '@/components/PilihPengubah';
+import PilihPJ from '@/components/PilihPJ';
 import Ikon from '@/components/Ikon';
 import { Btn, Pilih, Label, Segmen, fieldCls, kartu } from '@/components/ui';
 import { tampilkanPesan } from '@/components/Popup';
@@ -27,6 +28,7 @@ export default function TambahKeputusan() {
   // Mode manual
   const [isiM, setIsiM] = useState('');
   const [subbagM, setSubbagM] = useState('');
+  const [picM, setPicM] = useState('');
   const [tenggatM, setTenggatM] = useState('');
 
   const [msg, setMsg] = useState('');
@@ -155,10 +157,11 @@ export default function TambahKeputusan() {
     if (!subbagM) return tampilkanPesan('Pilih penanggung jawab subbag.');
     if (!tenggatM) return tampilkanPesan('Isi tenggat terlebih dahulu.');
 
-    const j = await kirim(judul, [{ isi: isiM.trim(), subbag: subbagM, tenggat: tenggatM, status: 'belum' }]);
+    const j = await kirim(judul, [{ isi: isiM.trim(), subbag: subbagM, pic: picM || null, tenggat: tenggatM, status: 'belum' }]);
     if (!j) return;
     setIsiM('');
     setSubbagM('');
+    setPicM('');
     setTenggatM('');
     setNamaBaru('');
     setMsg(`Keputusan tersimpan ke "${judul}".`);
@@ -273,12 +276,17 @@ export default function TambahKeputusan() {
                     />
                   </label>
                   <input className={fieldCls} value={d.isi} onChange={(e) => ubahDraf(i, { isi: e.target.value })} />
-                  <Pilih value={d.subbag} onChange={(e) => ubahDraf(i, { subbag: e.target.value })}>
-                    <option value="">— penanggung jawab —</option>
-                    {SUBBAG.map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </Pilih>
+                  <div className="space-y-2">
+                    <Pilih value={d.subbag} onChange={(e) => ubahDraf(i, { subbag: e.target.value, pic: '' })}>
+                      <option value="">— penanggung jawab —</option>
+                      {SUBBAG.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </Pilih>
+                    {d.subbag && (
+                      <PilihPJ subbag={d.subbag} value={d.pic ?? ''} onChange={(v) => ubahDraf(i, { pic: v })} />
+                    )}
+                  </div>
                   <input className={fieldCls} type="date" value={d.tenggat} onChange={(e) => ubahDraf(i, { tenggat: e.target.value })} />
                 </div>
               ))}
@@ -304,13 +312,22 @@ export default function TambahKeputusan() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label icon="gedung">Penanggung jawab subbag</Label>
-              <Pilih value={subbagM} onChange={(e) => setSubbagM(e.target.value)}>
+              <Pilih value={subbagM} onChange={(e) => {
+                  setSubbagM(e.target.value);
+                  setPicM('');
+                }}>
                 <option value="">— pilih subbag —</option>
                 {SUBBAG.map((s) => (
                   <option key={s}>{s}</option>
                 ))}
               </Pilih>
             </div>
+            {subbagM && (
+              <div>
+                <Label icon="orang">Penanggung jawab orang (opsional)</Label>
+                <PilihPJ subbag={subbagM} value={picM} onChange={setPicM} />
+              </div>
+            )}
             <div>
               <Label icon="kalender">Tenggat</Label>
               <input className={fieldCls} type="date" value={tenggatM} onChange={(e) => setTenggatM(e.target.value)} />
