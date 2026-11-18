@@ -2,13 +2,35 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import Ikon from './Ikon';
 
 const TABS = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/daftar', label: 'Daftar Keputusan' },
-  { href: '/impor', label: 'Impor dari Notula' },
-  { href: '/riwayat', label: 'Riwayat' },
+  { href: '/', label: 'Dashboard', icon: 'grid' },
+  { href: '/daftar', label: 'Daftar Keputusan', icon: 'daftar' },
+  { href: '/impor', label: 'Impor dari Notula', icon: 'dokumen' },
+  { href: '/riwayat', label: 'Riwayat', icon: 'riwayat' },
 ];
+
+// Logo dari /public/logo-kpu.png. Kalau file belum ada, tampil teks KPU.
+function Logo() {
+  const [gagal, setGagal] = useState(false);
+  if (gagal) {
+    return (
+      <div className="grid h-12 w-12 flex-none place-items-center rounded-full bg-white text-sm font-extrabold text-[#7a1f2b] shadow-lg md:h-14 md:w-14">
+        KPU
+      </div>
+    );
+  }
+  return (
+    <img
+      src="/logo-kpu.png"
+      alt="Logo KPU"
+      onError={() => setGagal(true)}
+      className="h-12 w-12 flex-none rounded-full bg-white object-contain p-1 shadow-lg md:h-14 md:w-14"
+    />
+  );
+}
 
 export default function Header() {
   const path = usePathname();
@@ -16,64 +38,77 @@ export default function Header() {
 
   return (
     <>
-      <header className="rounded-b-[28px] bg-gradient-to-br from-[#7a1f2b] to-[#5c1420] px-4 pb-6 pt-5 text-white md:px-8">
-        <div className="mx-auto max-w-6xl">
+      <header className="relative overflow-hidden rounded-b-[32px] bg-gradient-to-br from-[#8a2633] via-[#7a1f2b] to-[#4a1219] px-4 pb-7 pt-6 text-white shadow-xl md:px-8">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/5" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-white/5" />
+
+        <div className="relative mx-auto max-w-6xl">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 md:gap-4">
-              <div className="grid h-12 w-12 flex-none place-items-center rounded-full bg-white text-sm font-extrabold text-[#7a1f2b] md:h-14 md:w-14">
-                KPU
-              </div>
+              <Logo />
               <div>
                 <h1 className="text-lg font-extrabold tracking-wide md:text-2xl">DECISION TRACKER</h1>
-                <p className="text-xs opacity-85 md:text-sm">
+                <p className="text-xs text-white/80 md:text-sm">
                   Monitoring Tindak Lanjut Keputusan Rapat KPU Kabupaten Hulu Sungai Tengah
                 </p>
               </div>
             </div>
             <Link
               href="/impor"
-              className="hidden flex-none rounded-xl bg-white px-4 py-2.5 font-bold text-[#7a1f2b] md:block"
+              className="hidden items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-[#7a1f2b] shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl md:inline-flex"
             >
-              + Keputusan baru
+              <Ikon nama="tambah" className="h-4 w-4" /> Keputusan baru
             </Link>
           </div>
 
-          <nav className="mt-5 hidden flex-wrap gap-2 md:flex">
+          <nav className="mt-6 hidden flex-wrap gap-1.5 rounded-2xl bg-black/15 p-1.5 md:inline-flex">
             {TABS.map((t) => (
               <Link
                 key={t.href}
                 href={t.href}
-                className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                  aktif(t.href) ? 'bg-white/20 opacity-100' : 'opacity-80 hover:opacity-100'
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                  aktif(t.href) ? 'bg-white text-[#7a1f2b] shadow-md' : 'text-white/90 hover:bg-white/10'
                 }`}
               >
+                <Ikon nama={t.icon} className="h-4 w-4" />
                 {t.label}
               </Link>
             ))}
           </nav>
 
-          <div className="mt-5 rounded-xl border border-[#e0b75a] bg-[#fff6dc] px-4 py-3 text-sm text-[#6b4e00] md:mt-6">
-            <b>Akses publik tanpa login.</b>{' '}
-            <span className="hidden md:inline">
-              Jangan memasukkan data pemilih, data pribadi pegawai, atau informasi rahasia. Nama pengubah dicatat tetapi tidak diverifikasi.
-            </span>
-            <span className="md:hidden">Jangan isi data rahasia atau data pribadi.</span>
+          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-md">
+            <Ikon nama="peringatan" className="mt-0.5 h-4 w-4 flex-none text-amber-600" />
+            <div>
+              <b>Akses publik tanpa login.</b>{' '}
+              <span className="hidden md:inline">
+                Jangan memasukkan data pemilih, data pribadi pegawai, atau informasi rahasia. Nama pengubah dicatat tetapi tidak diverifikasi.
+              </span>
+              <span className="md:hidden">Jangan isi data rahasia atau data pribadi.</span>
+            </div>
           </div>
         </div>
       </header>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-around border-t bg-white px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 text-xs font-semibold text-stone-500 md:hidden">
-        <Link href="/" className={aktif('/') ? 'text-[#7a1f2b]' : ''}>Dashboard</Link>
-        <Link href="/daftar" className={aktif('/daftar') ? 'text-[#7a1f2b]' : ''}>Daftar</Link>
+      <nav className="fixed inset-x-3 bottom-3 z-20 flex items-center justify-around rounded-2xl border border-stone-200 bg-white/95 px-2 py-2 text-[11px] font-semibold text-stone-500 shadow-2xl backdrop-blur md:hidden">
+        <Link href="/" className={`flex flex-col items-center gap-0.5 ${aktif('/') ? 'text-[#7a1f2b]' : ''}`}>
+          <Ikon nama="grid" className="h-5 w-5" />Dashboard
+        </Link>
+        <Link href="/daftar" className={`flex flex-col items-center gap-0.5 ${aktif('/daftar') ? 'text-[#7a1f2b]' : ''}`}>
+          <Ikon nama="daftar" className="h-5 w-5" />Daftar
+        </Link>
         <Link
           href="/impor"
           aria-label="Keputusan baru"
-          className="-mt-7 grid h-14 w-14 place-items-center rounded-full bg-[#7a1f2b] text-3xl font-normal text-white shadow-lg"
+          className="-mt-8 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-[#8a2633] to-[#5c1420] text-white shadow-xl ring-4 ring-[#f3eeee]"
         >
-          +
+          <Ikon nama="tambah" className="h-6 w-6" />
         </Link>
-        <Link href="/impor" className={aktif('/impor') ? 'text-[#7a1f2b]' : ''}>Impor</Link>
-        <Link href="/riwayat" className={aktif('/riwayat') ? 'text-[#7a1f2b]' : ''}>Riwayat</Link>
+        <Link href="/impor" className={`flex flex-col items-center gap-0.5 ${aktif('/impor') ? 'text-[#7a1f2b]' : ''}`}>
+          <Ikon nama="dokumen" className="h-5 w-5" />Impor
+        </Link>
+        <Link href="/riwayat" className={`flex flex-col items-center gap-0.5 ${aktif('/riwayat') ? 'text-[#7a1f2b]' : ''}`}>
+          <Ikon nama="riwayat" className="h-5 w-5" />Riwayat
+        </Link>
       </nav>
     </>
   );
