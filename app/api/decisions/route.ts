@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { STATUS, SUBBAG } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 const bad = (m: string) => NextResponse.json({ error: m }, { status: 400 });
 
 export async function GET() {
