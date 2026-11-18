@@ -9,7 +9,7 @@ export async function extractDecisions(teks: string): Promise<HasilEkstraksi[]> 
   const prompt = `Dari notula rapat berikut, ambil HANYA keputusan dan tindak lanjut yang benar-benar disebutkan.
 Jangan mengarang. Keluarkan JSON array berisi objek dengan kunci:
 - "isi": kalimat keputusan singkat dalam bahasa baku
-- "subbag": salah satu dari Subbag Teknis, Subbag Hukum, Subbag Umum, Subbag Keuangan, Subbag Data, Subbag Sosdiklih, atau null jika tidak jelas
+- "subbag": salah satu dari Subbag Rendatin, Subbag KUL, Subbag SDM Parmas, Subbag Teknis dan Hukum, Semua Subbag (untuk tanggung jawab bersama), atau null jika tidak jelas
 - "tenggat": tanggal format YYYY-MM-DD, atau null jika tidak jelas
 Tanpa penjelasan lain.
 

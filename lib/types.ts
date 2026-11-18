@@ -1,10 +1,9 @@
 export const SUBBAG: string[] = [
-  'Subbag Teknis',
-  'Subbag Hukum',
-  'Subbag Umum',
-  'Subbag Keuangan',
-  'Subbag Data',
-  'Subbag Sosdiklih',
+  'Subbag Rendatin',
+  'Subbag KUL',
+  'Subbag SDM Parmas',
+  'Subbag Teknis dan Hukum',
+  'Semua Subbag',
 ];
 
 export const STATUS = ['belum', 'sedang', 'menunggu', 'selesai'] as const;
