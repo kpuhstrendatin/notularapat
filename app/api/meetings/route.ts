@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+export const dynamic = 'force-dynamic';
 
 // Daftar rapat, diurutkan dari yang terakhir diupdate.
 export async function GET() {
