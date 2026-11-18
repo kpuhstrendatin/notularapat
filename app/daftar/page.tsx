@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LBL, isLate, type Decision, type Status, STATUS } from '@/lib/types';
+import { LBL, isLate, SUBBAG, type Decision, type Status, STATUS } from '@/lib/types';
+import PilihPengubah from '@/components/PilihPengubah';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 const fmt = (s: string) => {
@@ -21,6 +22,7 @@ export default function Daftar() {
   const [rows, setRows] = useState<Decision[]>([]);
   const [filter, setFilter] = useState('');
   const [cari, setCari] = useState('');
+  const [subbag, setSubbag] = useState('');
   const [oleh, setOleh] = useState('');
   const [msg, setMsg] = useState('');
   const [memuat, setMemuat] = useState(true);
@@ -38,7 +40,7 @@ export default function Daftar() {
   }, []);
 
   async function ubahStatus(id: string, status: Status) {
-    if (!oleh.trim()) return setMsg('Isi nama pengubah dulu.');
+    if (!oleh.trim()) return setMsg('Pilih nama pengubah dulu.');
     setMsg('Menyimpan…');
     const r = await fetch('/api/decisions', {
       method: 'PATCH',
@@ -55,14 +57,15 @@ export default function Daftar() {
     const cocokCari = !cari || (d.isi + ' ' + d.subbag).toLowerCase().includes(cari.toLowerCase());
     const cocokFilter =
       !filter || (filter === 'terlambat' ? isLate(d) : d.status === filter);
-    return cocokCari && cocokFilter;
+    const cocokSubbag = !subbag || d.subbag === subbag;
+    return cocokCari && cocokFilter && cocokSubbag;
   });
 
   return (
     <div className="space-y-4">
       <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
         <h2 className="font-bold">Daftar Keputusan</h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-4">
+        <div className="mt-3 grid gap-3 md:grid-cols-5">
           <input
             className="rounded-lg border p-2 md:col-span-2"
             placeholder="Cari keputusan atau subbagian"
@@ -78,12 +81,15 @@ export default function Daftar() {
             ))}
             <option value="terlambat">Terlambat</option>
           </select>
-          <input
-            className="rounded-lg border p-2"
-            placeholder="Nama pengubah (wajib)"
-            value={oleh}
-            onChange={(e) => setOleh(e.target.value)}
-          />
+          <select className="rounded-lg border p-2" value={subbag} onChange={(e) => setSubbag(e.target.value)}>
+            <option value="">Semua subbag</option>
+            {SUBBAG.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <PilihPengubah value={oleh} onChange={setOleh} />
         </div>
         {msg && <p className="mt-2 text-sm text-stone-500">{msg}</p>}
       </section>
