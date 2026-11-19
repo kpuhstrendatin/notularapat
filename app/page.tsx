@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [pengubahList, setPengubahList] = useState<string[]>([]);
   const [baca, setBaca] = useState<Record<string, { nama: string; at: string }[]>>({});
   const [notif, setNotif] = useState('default');
+  const [rincian, setRincian] = useState(false);
   const [oleh, setOleh] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -244,6 +245,14 @@ export default function Dashboard() {
         </div>
       </section>
 
+      <button
+        type="button"
+        onClick={() => setRincian(!rincian)}
+        className="w-full rounded-xl border border-stone-200 bg-white py-3 text-sm font-semibold text-[#7a1f2b] shadow-sm md:hidden"
+      >
+        {rincian ? 'Sembunyikan rincian' : 'Lihat rincian (per subbag, notula, perhatian, tenggat)'}
+      </button>
+      <div className={`${rincian ? 'block' : 'hidden'} md:block`}>
       <section className={kartu}>
         <h2 className="font-bold">Per subbag</h2>
         <div className="mt-3 space-y-3">
@@ -268,6 +277,7 @@ export default function Dashboard() {
           {perSubbag.length === 0 && <p className="text-sm text-stone-500">Belum ada data pada periode ini.</p>}
         </div>
       </section>
+      </div>
 
       {bersama.length > 0 && (
         <section className="overflow-hidden rounded-3xl border-2 border-red-600 bg-white shadow-xl ring-4 ring-red-600/10">
@@ -300,6 +310,7 @@ export default function Dashboard() {
         </section>
       )}
 
+      <div className={`${rincian ? 'block' : 'hidden'} space-y-4 md:block`}>
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={kartu}>
           <h2 className="font-bold">Ringkasan per notula</h2>
@@ -404,6 +415,7 @@ export default function Dashboard() {
 
       </div>
 
+      </div>
     </div>
   );
 }
