@@ -5,6 +5,7 @@ import { tampilkanPesan } from '@/components/Popup';
 import { SUBBAG, LBL, STATUS, hariIni, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, tambahHari, tanggalRapat, dalamPeriode, type Periode } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
+import PesanBersama from '@/components/PesanBersama';
 import { Pilih, Btn, fieldCls } from '@/components/ui';
 import Ikon from '@/components/Ikon';
 import { StatusChip, StatusEdit } from '@/components/Status';
@@ -284,83 +285,17 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-5 p-6">
-            {bersama.map((d, idx) => {
-              const sudah = [...(baca[d.id] ?? [])].sort((x, y) => y.at.localeCompare(x.at));
-              const namaSudah = sudah.map((x) => x.nama);
-              const belum = pengubahList.filter((n) => !namaSudah.includes(n)).sort((x, y) => x.localeCompare(y));
-              const sudahSaya = !!oleh && namaSudah.includes(oleh);
-              return (
-                <div key={d.id} className="rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-white p-5">
-                  <div className="flex items-start gap-4">
-                    <span className="grid h-9 w-9 flex-none place-items-center rounded-full bg-red-600 text-base font-black text-white shadow">
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-lg font-extrabold leading-snug text-red-800">{d.isi}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500">
-                        {d.pic && (
-                          <span className="flex items-center gap-1.5 text-sm font-semibold text-stone-700">
-                            <Ikon nama="orang" className="h-4 w-4" /> {d.pic}
-                          </span>
-                        )}
-                        <span>Dibuat {fmt(d.created_at.slice(0, 10))}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    <details className="group rounded-xl border border-emerald-200 bg-white">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-emerald-700 [&::-webkit-details-marker]:hidden">
-                        <span className="flex items-center gap-2">
-                          <Ikon nama="cek" className="h-4 w-4" /> Sudah dibaca ({sudah.length})
-                        </span>
-                        <span className="text-stone-400 transition group-open:rotate-180">▾</span>
-                      </summary>
-                      <div className="flex flex-wrap gap-1.5 px-4 pb-4">
-                        {sudah.map((x) => (
-                          <span key={x.nama} className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                            {x.nama}
-                          </span>
-                        ))}
-                        {sudah.length === 0 && <span className="text-xs text-stone-500">Belum ada</span>}
-                      </div>
-                    </details>
-
-                    <details className="group rounded-xl border border-red-200 bg-white">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-red-700 [&::-webkit-details-marker]:hidden">
-                        <span className="flex items-center gap-2">
-                          <Ikon nama="peringatan" className="h-4 w-4" /> Belum dibaca ({belum.length})
-                        </span>
-                        <span className="text-stone-400 transition group-open:rotate-180">▾</span>
-                      </summary>
-                      <div className="flex flex-wrap gap-1.5 px-4 pb-4">
-                        {belum.map((n) => (
-                          <span key={n} className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">
-                            {n}
-                          </span>
-                        ))}
-                        {belum.length === 0 && <span className="text-xs text-stone-500">Semua sudah membaca</span>}
-                      </div>
-                    </details>
-                  </div>
-
-                  <div className="mt-4">
-                    {sudahSaya ? (
-                      <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-                        <Ikon nama="cek" className="h-4 w-4" /> Anda sudah membaca
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => tandaiBaca(d.id)}
-                        className="rounded-xl bg-gradient-to-r from-red-700 to-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
-                      >
-                        Saya sudah membaca
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {bersama.map((d, idx) => (
+              <PesanBersama
+                key={d.id}
+                d={d}
+                nomor={idx + 1}
+                sudah={baca[d.id] ?? []}
+                pengubah={pengubahList}
+                oleh={oleh}
+                onBaca={tandaiBaca}
+              />
+            ))}
           </div>
         </section>
       )}
