@@ -30,7 +30,7 @@ export type Decision = {
   meetings: { judul: string; tanggal: string | null } | null;
 };
 
-export type Draft = { isi: string; subbag: string; tenggat: string; on: boolean };
+export type Draft = { isi: string; subbag: string; tenggat: string; on: boolean; pic?: string };
 
 // Tanggal hari ini menurut zona WITA, supaya "terlambat" tidak bergeser di dini hari.
 export function hariIni(): string {
