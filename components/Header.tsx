@@ -91,26 +91,47 @@ export default function Header() {
         </div>
       </header>
 
-      <nav className="print:hidden fixed inset-x-3 bottom-3 z-20 flex items-center justify-around rounded-2xl border border-stone-200 bg-white/95 px-2 py-2 text-[11px] font-semibold text-stone-500 shadow-2xl backdrop-blur md:hidden">
-        <Link href="/" className={`flex flex-col items-center gap-0.5 ${aktif('/') ? 'text-[#7a1f2b]' : ''}`}>
-          <Ikon nama="grid" className="h-5 w-5" />Dashboard
-        </Link>
-        <Link href="/daftar" className={`flex flex-col items-center gap-0.5 ${aktif('/daftar') ? 'text-[#7a1f2b]' : ''}`}>
-          <Ikon nama="daftar" className="h-5 w-5" />Daftar
-        </Link>
+      <nav className="print:hidden fixed inset-x-2 bottom-2 z-20 flex items-end rounded-2xl border border-stone-200 bg-white/95 px-1 pb-1.5 pt-1.5 text-[10px] font-semibold text-stone-500 shadow-2xl backdrop-blur md:hidden">
+        <div className="flex flex-1 justify-around">
+          {[
+            { href: '/', label: 'Dashboard', icon: 'grid' },
+            { href: '/daftar', label: 'Daftar', icon: 'daftar' },
+          ].map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className={`flex min-w-[48px] flex-col items-center gap-0.5 rounded-lg px-1 py-1 ${aktif(t.href) ? 'text-[#7a1f2b]' : ''}`}
+            >
+              <Ikon nama={t.icon} className="h-5 w-5" />
+              {t.label}
+            </Link>
+          ))}
+        </div>
+
         <Link
           href="/impor"
           aria-label="Keputusan baru"
-          className="-mt-8 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-[#8a2633] to-[#5c1420] text-white shadow-xl ring-4 ring-[#f3eeee]"
+          className="-mt-7 mx-1 grid h-14 w-14 flex-none place-items-center rounded-full bg-gradient-to-br from-[#8a2633] to-[#5c1420] text-white shadow-xl ring-4 ring-[#f3eeee]"
         >
           <Ikon nama="tambah" className="h-6 w-6" />
         </Link>
-        <Link href="/impor" className={`flex flex-col items-center gap-0.5 ${aktif('/impor') ? 'text-[#7a1f2b]' : ''}`}>
-          <Ikon nama="dokumen" className="h-5 w-5" />Impor
-        </Link>
-        <Link href="/riwayat" className={`flex flex-col items-center gap-0.5 ${aktif('/riwayat') ? 'text-[#7a1f2b]' : ''}`}>
-          <Ikon nama="riwayat" className="h-5 w-5" />Riwayat
-        </Link>
+
+        <div className="flex flex-1 justify-around">
+          {[
+            { href: '/laporan', label: 'Laporan', icon: 'notula' },
+            { href: '/riwayat', label: 'Riwayat', icon: 'riwayat' },
+            { href: '/panduan', label: 'Panduan', icon: 'dokumen' },
+          ].map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className={`flex min-w-[48px] flex-col items-center gap-0.5 rounded-lg px-1 py-1 ${aktif(t.href) ? 'text-[#7a1f2b]' : ''}`}
+            >
+              <Ikon nama={t.icon} className="h-5 w-5" />
+              {t.label}
+            </Link>
+          ))}
+        </div>
       </nav>
     </>
   );
