@@ -29,6 +29,7 @@ export default function Daftar() {
   const [subbag, setSubbag] = useState('');
   const [urut, setUrut] = useState<Urut>('tenggat-asc');
   const [kelompok, setKelompok] = useState(false);
+  const [bukaFilter, setBukaFilter] = useState(false);
   const [oleh, setOleh] = useState('');
   const [msg, setMsg] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
@@ -235,6 +236,8 @@ export default function Daftar() {
     );
   };
 
+  const jumlahFilter = (subbag ? 1 : 0) + (filter ? 1 : 0) + (urut !== 'tenggat-asc' ? 1 : 0) + (kelompok ? 1 : 0);
+
   return (
     <div className="space-y-4">
       <section className={kartu}>
@@ -243,12 +246,30 @@ export default function Daftar() {
             <Ikon nama="daftar" className="h-5 w-5 text-[#7a1f2b]" /> Daftar Keputusan
             <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-sm font-semibold text-stone-600">{tampil.length}</span>
           </h2>
-          <Btn variant="garis" onClick={ekspor}><Ikon nama="unduh" className="h-4 w-4" /> Ekspor ke Excel (CSV)</Btn>
+          <Btn variant="garis" onClick={ekspor} className="px-3"><Ikon nama="unduh" className="h-4 w-4" /><span className="hidden sm:inline">Ekspor ke Excel (CSV)</span><span className="sm:hidden">CSV</span></Btn>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-12">
-          <Cari value={cari} onChange={setCari} placeholder="Cari keputusan, notula, subbag, atau nama" className="md:col-span-4" />
-          <Pilih value={subbag} onChange={(e) => setSubbag(e.target.value)} className="md:col-span-2">
+        <div className="mt-4 flex items-center gap-2">
+          <Cari value={cari} onChange={setCari} placeholder="Cari keputusan, notula, subbag, atau nama" className="flex-1" />
+          <button
+            type="button"
+            onClick={() => setBukaFilter(!bukaFilter)}
+            className={`inline-flex flex-none items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-semibold shadow-sm md:hidden ${
+              bukaFilter || jumlahFilter > 0
+                ? 'border-[#7a1f2b] bg-[#7a1f2b]/5 text-[#7a1f2b]'
+                : 'border-stone-200 bg-white text-stone-700'
+            }`}
+          >
+            <Ikon nama="daftar" className="h-4 w-4" />
+            Filter
+            {jumlahFilter > 0 && (
+              <span className="rounded-full bg-[#7a1f2b] px-1.5 text-[11px] text-white">{jumlahFilter}</span>
+            )}
+          </button>
+        </div>
+
+        <div className={`mt-3 gap-3 md:grid md:grid-cols-4 ${bukaFilter ? 'grid' : 'hidden md:grid'}`}>
+          <Pilih value={subbag} onChange={(e) => setSubbag(e.target.value)}>
             <option value="">Semua subbag</option>
             {SUBBAG.map((s) => (
               <option key={s} value={s}>
@@ -256,7 +277,7 @@ export default function Daftar() {
               </option>
             ))}
           </Pilih>
-          <Pilih value={filter} onChange={(e) => setFilter(e.target.value)} className="md:col-span-2">
+          <Pilih value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option value="">Semua progres</option>
             {STATUS.map((s) => (
               <option key={s} value={s}>
@@ -265,7 +286,7 @@ export default function Daftar() {
             ))}
             <option value="terlambat">Terlambat</option>
           </Pilih>
-          <Pilih value={urut} onChange={(e) => setUrut(e.target.value as Urut)} className="md:col-span-2">
+          <Pilih value={urut} onChange={(e) => setUrut(e.target.value as Urut)}>
             {(Object.keys(URUT_LABEL) as Urut[]).map((u) => (
               <option key={u} value={u}>
                 Urut: {URUT_LABEL[u]}
@@ -275,7 +296,7 @@ export default function Daftar() {
           <button
             type="button"
             onClick={() => setKelompok(!kelompok)}
-            className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition md:col-span-2 ${
+            className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
               kelompok
                 ? 'border-[#7a1f2b] bg-[#7a1f2b]/5 text-[#7a1f2b]'
                 : 'border-stone-200 bg-white text-stone-700 shadow-sm hover:bg-stone-50'
@@ -292,15 +313,10 @@ export default function Daftar() {
           </button>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <div>
-            <label className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-stone-500">
-              <Ikon nama="orang" className="h-3.5 w-3.5" /> Nama pengubah (wajib untuk mengubah)
-            </label>
-            <PilihPengubah value={oleh} onChange={setOleh} />
-          </div>
-          {msg && <p className="self-end text-sm text-stone-600 md:col-span-2">{msg}</p>}
+        <div className="mt-3">
+          <PilihPengubah value={oleh} onChange={setOleh} />
         </div>
+        {msg && <p className="mt-3 text-sm text-stone-600">{msg}</p>}
       </section>
 
       {memuat && <p className="rounded-2xl bg-white p-4 text-stone-500 shadow-sm">Memuat…</p>}
