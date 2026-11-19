@@ -11,6 +11,7 @@ const TABS = [
   { href: '/impor', label: 'Impor dari Notula', icon: 'dokumen' },
   { href: '/riwayat', label: 'Riwayat', icon: 'riwayat' },
   { href: '/laporan', label: 'Laporan', icon: 'notula' },
+  { href: '/panduan', label: 'Panduan', icon: 'dokumen' },
 ];
 
 // Logo dari /public/logo-kpu.png. Kalau file belum ada, tampil teks KPU.
