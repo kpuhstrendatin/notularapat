@@ -10,6 +10,7 @@ const TABS = [
   { href: '/daftar', label: 'Daftar Keputusan', icon: 'daftar' },
   { href: '/impor', label: 'Impor dari Notula', icon: 'dokumen' },
   { href: '/riwayat', label: 'Riwayat', icon: 'riwayat' },
+  { href: '/laporan', label: 'Laporan', icon: 'notula' },
 ];
 
 // Logo dari /public/logo-kpu.png. Kalau file belum ada, tampil teks KPU.
@@ -38,7 +39,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="relative overflow-hidden rounded-b-[32px] bg-gradient-to-br from-[#8a2633] via-[#7a1f2b] to-[#4a1219] px-4 pb-7 pt-6 text-white shadow-xl md:px-8">
+      <header className="print:hidden relative overflow-hidden rounded-b-[32px] bg-gradient-to-br from-[#8a2633] via-[#7a1f2b] to-[#4a1219] px-4 pb-7 pt-6 text-white shadow-xl md:px-8">
         <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/5" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-white/5" />
 
@@ -89,7 +90,7 @@ export default function Header() {
         </div>
       </header>
 
-      <nav className="fixed inset-x-3 bottom-3 z-20 flex items-center justify-around rounded-2xl border border-stone-200 bg-white/95 px-2 py-2 text-[11px] font-semibold text-stone-500 shadow-2xl backdrop-blur md:hidden">
+      <nav className="print:hidden fixed inset-x-3 bottom-3 z-20 flex items-center justify-around rounded-2xl border border-stone-200 bg-white/95 px-2 py-2 text-[11px] font-semibold text-stone-500 shadow-2xl backdrop-blur md:hidden">
         <Link href="/" className={`flex flex-col items-center gap-0.5 ${aktif('/') ? 'text-[#7a1f2b]' : ''}`}>
           <Ikon nama="grid" className="h-5 w-5" />Dashboard
         </Link>
