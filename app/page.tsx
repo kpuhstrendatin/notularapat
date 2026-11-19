@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [baca, setBaca] = useState<Record<string, { nama: string; at: string }[]>>({});
   const [notif, setNotif] = useState('default');
   const [rincian, setRincian] = useState(false);
+  const [bukaFilter, setBukaFilter] = useState(false);
   const [oleh, setOleh] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -170,27 +171,54 @@ export default function Dashboard() {
     return { s, n: items.length, seg: STATUS.map((st) => ({ st, n: items.filter((d) => d.status === st).length })) };
   }).filter((x) => x.n > 0);
 
+  const jumlahFilter = (dasar !== 'rapat' ? 1 : 0) + (picFilter ? 1 : 0);
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="flex items-center gap-1.5 text-sm text-stone-500">
-            <Ikon nama="kalender" className="h-4 w-4" /> Periode:
-          </span>
-          <Pilih value={periode} onChange={(e) => setPeriode(e.target.value as Periode)} className="w-44">
+      <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Pilih
+            value={periode}
+            onChange={(e) => setPeriode(e.target.value as Periode)}
+            className="flex-1 md:w-48 md:flex-none"
+          >
             <option value="semua">Semua waktu</option>
             <option value="bulan">Bulan ini</option>
             <option value="triwulan">Triwulan ini</option>
             <option value="bulanTertentu">Bulan tertentu</option>
           </Pilih>
-          {periode === 'bulanTertentu' && (
-            <input type="month" className={`${fieldCls} w-44`} value={bulanPilih} onChange={(e) => setBulanPilih(e.target.value)} />
-          )}
-          <Pilih value={dasar} onChange={(e) => setDasar(e.target.value as 'rapat' | 'dibuat')} className="w-60">
+          <button
+            type="button"
+            onClick={() => setBukaFilter(!bukaFilter)}
+            className={`inline-flex flex-none items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-semibold shadow-sm md:hidden ${
+              bukaFilter || jumlahFilter > 0
+                ? 'border-[#7a1f2b] bg-[#7a1f2b]/5 text-[#7a1f2b]'
+                : 'border-stone-200 bg-white text-stone-700'
+            }`}
+          >
+            <Ikon nama="daftar" className="h-4 w-4" />
+            Filter
+            {jumlahFilter > 0 && (
+              <span className="rounded-full bg-[#7a1f2b] px-1.5 text-[11px] text-white">{jumlahFilter}</span>
+            )}
+          </button>
+        </div>
+
+        {periode === 'bulanTertentu' && (
+          <input
+            type="month"
+            className={`${fieldCls} mt-3`}
+            value={bulanPilih}
+            onChange={(e) => setBulanPilih(e.target.value)}
+          />
+        )}
+
+        <div className={`mt-3 gap-3 md:grid md:grid-cols-3 ${bukaFilter ? 'grid' : 'hidden md:grid'}`}>
+          <Pilih value={dasar} onChange={(e) => setDasar(e.target.value as 'rapat' | 'dibuat')}>
             <option value="rapat">Dihitung dari tanggal rapat</option>
             <option value="dibuat">Dihitung dari tanggal dibuat</option>
           </Pilih>
-          <Pilih value={picFilter} onChange={(e) => setPicFilter(e.target.value)} className="w-56">
+          <Pilih value={picFilter} onChange={(e) => setPicFilter(e.target.value)}>
             <option value="">Semua penanggung jawab</option>
             {daftarPic.map((n) => (
               <option key={n} value={n}>
@@ -198,17 +226,17 @@ export default function Dashboard() {
               </option>
             ))}
           </Pilih>
-          {notif !== 'granted' && notif !== 'unsupported' && (
-            <Btn
-              variant="garis"
-              onClick={async () => setNotif(await Notification.requestPermission())}
-            >
+          {notif !== 'granted' && notif !== 'unsupported' ? (
+            <Btn variant="garis" onClick={async () => setNotif(await Notification.requestPermission())}>
               <Ikon nama="peringatan" className="h-4 w-4" /> Aktifkan pengingat
             </Btn>
+          ) : (
+            <div />
           )}
         </div>
-        <div className="w-full md:w-80">
-          <label className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-stone-500">
+
+        <div className="mt-3">
+          <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-stone-500">
             <Ikon nama="orang" className="h-3.5 w-3.5" /> Nama pengubah (wajib untuk mengubah progres)
           </label>
           <PilihPengubah value={oleh} onChange={setOleh} />
@@ -367,6 +395,7 @@ export default function Dashboard() {
         </section>
       </div>
 
+      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={kartu}>
           <h2 className="font-bold">Tenggat 7 hari ke depan</h2>
@@ -392,7 +421,8 @@ export default function Dashboard() {
             {tenggat7.length === 0 && <p className="text-stone-500">Tidak ada tenggat dalam 7 hari ke depan.</p>}
           </div>
         </section>
-        <section className={kartu}>
+        <div className={`${rincian ? 'block' : 'hidden'} md:block`}>
+<section className={kartu}>
           <h2 className="font-bold">Keputusan terbaru</h2>
           <div className="mt-2 divide-y">
             {terbaru.map((d) => (
@@ -412,10 +442,10 @@ export default function Dashboard() {
             {terbaru.length === 0 && <p className="py-2 text-stone-500">Belum ada keputusan pada periode ini.</p>}
           </div>
         </section>
+</div>
 
       </div>
 
-      </div>
     </div>
   );
 }
