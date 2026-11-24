@@ -262,6 +262,8 @@ export default function Daftar() {
     );
   };
 
+  const jumlahFilter = (subbag ? 1 : 0) + (filter ? 1 : 0) + (urut !== 'tenggat-asc' ? 1 : 0) + (kelompok ? 1 : 0);
+
   return (
     <div className="space-y-4">
       <section className={kartu}>
