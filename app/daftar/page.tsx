@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { tampilkanPesan } from '@/components/Popup';
+import { tampilkanPesan, tampilkanToast } from '@/components/Popup';
 import { LBL, STATUS, SUBBAG, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, unduhCSV } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
 import PilihPJ from '@/components/PilihPJ';
-import { Btn, Cari, Pilih } from '@/components/ui';
+import { Btn, Cari, Label, Pilih } from '@/components/ui';
 import Ikon from '@/components/Ikon';
 import { StatusPilih, StatusEdit, STATUS_STYLE } from '@/components/Status';
 
@@ -32,6 +32,10 @@ export default function Daftar() {
   const [bukaFilter, setBukaFilter] = useState(false);
   const [oleh, setOleh] = useState('');
   const [msg, setMsg] = useState('');
+  const sukses = (t: string) => {
+    setMsg(t);
+    tampilkanToast(t);
+  };
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ isi: '', subbag: '', pic: '', tenggat: '', status: 'belum' as Status });
 
@@ -73,7 +77,7 @@ export default function Daftar() {
     if (!cekOleh()) return;
     setMsg('Menyimpan…');
     if (await kirim({ id, status })) {
-      setMsg('Progres diperbarui.');
+      sukses('Progres diperbarui.');
       muat();
     }
   }
@@ -90,7 +94,7 @@ export default function Daftar() {
     setMsg('Menyimpan…');
     if (await kirim({ id, ...form })) {
       setEditId(null);
-      setMsg('Perubahan disimpan.');
+      sukses('Perubahan disimpan.');
       muat();
     }
   }
@@ -147,96 +151,116 @@ export default function Daftar() {
 
   const renderBaris = (d: Decision, tampilNotula: boolean) => {
     const terlambat = isLate(d);
-    const garis = terlambat ? 'border-red-600' : STATUS_STYLE[d.status].garis;
+    const buka = editId === d.id;
+    const garis = STATUS_STYLE[d.status].garis.replace('border-', 'border-l-');
     return (
-      <div
-        className={`rounded-xl border border-l-4 bg-white p-4 shadow-sm ${garis} ${terlambat ? 'bg-red-50/60' : ''}`}
+      <article
+        className={`rounded-2xl border-l-4 bg-white p-5 shadow-sm ring-1 ring-stone-200/80 ${
+          terlambat ? 'border-l-red-600 bg-red-50/40' : garis
+        }`}
       >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-5">
-          <div className="min-w-0 flex-1">
-            <div className="font-semibold leading-snug text-stone-900">{d.isi}</div>
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-stone-600">
-              {tampilNotula && (
-                <span className="flex items-center gap-1.5">
-                  <Ikon nama="notula" className="h-3.5 w-3.5 text-stone-400" />
-                  {d.meetings?.judul ?? 'Tanpa notula'}
-                  {d.meetings?.tanggal ? ` · ${fmt(d.meetings.tanggal)}` : ''}
-                </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                <Ikon nama="gedung" className="h-3.5 w-3.5 text-stone-400" /> {d.subbag}
-              </span>
-              {d.pic && (
-                <span className="flex items-center gap-1.5">
-                  <Ikon nama="orang" className="h-3.5 w-3.5 text-stone-400" /> {d.pic}
-                </span>
-              )}
-              <span
-                className={`flex items-center gap-1.5 ${terlambat ? 'font-semibold text-red-700' : ''}`}
-              >
-                <Ikon nama="kalender" className="h-3.5 w-3.5" /> Tenggat {fmt(d.tenggat)}
-                {terlambat && <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] text-white">TERLAMBAT</span>}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-start gap-2 lg:items-end">
-            <StatusEdit value={d.status} onChange={(s) => ubahProgres(d.id, s)} />
-            <button
-              onClick={() => (editId === d.id ? setEditId(null) : bukaEdit(d))}
-              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-medium text-stone-700 hover:bg-stone-50"
-            >
-              <Ikon nama="pensil" className="h-3.5 w-3.5" /> {editId === d.id ? 'Tutup edit' : 'Edit keputusan'}
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <StatusEdit value={d.status} onChange={(st) => ubahProgres(d.id, st)} />
+          {terlambat && (
+            <span className="rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold tracking-wide text-white">TERLAMBAT</span>
+          )}
+          <span
+            className={`ml-auto inline-flex items-center gap-1.5 text-sm font-semibold ${
+              terlambat ? 'text-red-700' : 'text-stone-700'
+            }`}
+          >
+            <Ikon nama="kalender" className="h-4 w-4" />
+            Tenggat {fmt(d.tenggat)}
+          </span>
         </div>
 
-        {editId === d.id && (
-          <div className="mt-4 grid gap-3 rounded-xl bg-stone-50 p-4 md:grid-cols-2">
+        <h3 className="mt-3 text-base font-bold leading-relaxed text-stone-900">{d.isi}</h3>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-stone-600">
+          {tampilNotula && d.meetings?.judul && (
+            <>
+              <span className="text-stone-800">{d.meetings.judul}</span>
+              {d.meetings.tanggal && <span className="text-stone-600">({fmt(d.meetings.tanggal)})</span>}
+              <span className="text-stone-300">•</span>
+            </>
+          )}
+          <span>{d.subbag}</span>
+          {d.pic && (
+            <>
+              <span className="text-stone-300">•</span>
+              <span>PJ: {d.pic}</span>
+            </>
+          )}
+        </div>
+
+        <div className="mt-4 flex justify-end border-t border-stone-100 pt-3">
+          <button
+            onClick={() => (buka ? setEditId(null) : bukaEdit(d))}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#7a1f2b] hover:underline"
+          >
+            <Ikon nama="pensil" className="h-3.5 w-3.5" /> {buka ? 'Tutup' : 'Edit keputusan'}
+          </button>
+        </div>
+
+        {buka && (
+          <div className="mt-4 grid gap-4 rounded-xl bg-stone-50 p-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-stone-500">Isi keputusan</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-stone-600">Isi keputusan</label>
               <textarea
-                className="w-full rounded-lg border p-2"
+                className="w-full rounded-lg border border-stone-300 p-2.5 text-sm text-stone-900"
                 rows={2}
                 value={form.isi}
                 onChange={(e) => setForm({ ...form, isi: e.target.value })}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-stone-500">Penanggung jawab subbag</label>
-              <select className="w-full rounded-lg border p-2" value={form.subbag} onChange={(e) => setForm({ ...form, subbag: e.target.value, pic: '' })}>
-                {SUBBAG.map((s) => (
-                  <option key={s}>{s}</option>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-stone-600">Penanggung jawab subbag</label>
+              <select
+                className="w-full rounded-lg border border-stone-300 p-2.5 text-sm text-stone-900"
+                value={form.subbag}
+                onChange={(e) => setForm({ ...form, subbag: e.target.value, pic: '' })}
+              >
+                {SUBBAG.map((x) => (
+                  <option key={x}>{x}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-stone-500">Penanggung jawab orang (opsional)</label>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-stone-600">Penanggung jawab orang (opsional)</label>
               <PilihPJ subbag={form.subbag} value={form.pic} onChange={(v) => setForm({ ...form, pic: v })} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-stone-500">Tenggat</label>
-              <input type="date" className="w-full rounded-lg border p-2" value={form.tenggat} onChange={(e) => setForm({ ...form, tenggat: e.target.value })} />
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-stone-600">Tenggat</label>
+              <input
+                type="date"
+                className="w-full rounded-lg border border-stone-300 p-2.5 text-sm text-stone-900"
+                value={form.tenggat}
+                onChange={(e) => setForm({ ...form, tenggat: e.target.value })}
+              />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-stone-500">Progres</label>
-              <StatusPilih value={form.status} onChange={(s) => setForm({ ...form, status: s })} />
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-stone-600">Progres</label>
+              <StatusPilih value={form.status} onChange={(st) => setForm({ ...form, status: st })} />
             </div>
             <div className="flex gap-2 md:col-span-2">
-              <button className="rounded-lg bg-[#7a1f2b] px-4 py-2 text-sm font-semibold text-white" onClick={() => simpanEdit(d.id)}>
+              <button
+                className="rounded-xl bg-[#7a1f2b] px-4 py-2.5 text-sm font-bold text-white shadow-sm"
+                onClick={() => simpanEdit(d.id)}
+              >
                 Simpan perubahan
               </button>
-              <button className="rounded-lg border px-4 py-2 text-sm" onClick={() => setEditId(null)}>
+              <button
+                className="rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800"
+                onClick={() => setEditId(null)}
+              >
                 Batal
               </button>
             </div>
           </div>
         )}
-      </div>
+      </article>
     );
   };
-
-  const jumlahFilter = (subbag ? 1 : 0) + (filter ? 1 : 0) + (urut !== 'tenggat-asc' ? 1 : 0) + (kelompok ? 1 : 0);
 
   return (
     <div className="space-y-4">
@@ -314,14 +338,15 @@ export default function Daftar() {
         </div>
 
         <div className="mt-3">
+          <Label icon="orang">Nama Anda (wajib untuk mengubah)</Label>
           <PilihPengubah value={oleh} onChange={setOleh} />
         </div>
         {msg && <p className="mt-3 text-sm text-stone-600">{msg}</p>}
       </section>
 
-      {memuat && <p className="rounded-2xl bg-white p-4 text-stone-500 shadow-sm">Memuat…</p>}
+      {memuat && <p className="rounded-2xl bg-white p-4 text-stone-600 shadow-sm">Memuat…</p>}
       {!memuat && tampil.length === 0 && (
-        <p className="rounded-2xl bg-white p-6 text-center text-stone-500 shadow-sm">Tidak ada keputusan yang cocok dengan filter.</p>
+        <p className="rounded-2xl bg-white p-6 text-center text-stone-600 shadow-sm">Tidak ada keputusan yang cocok dengan filter.</p>
       )}
 
       {!memuat && tampil.length > 0 && !kelompok && (
