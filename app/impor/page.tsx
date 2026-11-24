@@ -6,7 +6,7 @@ import PilihPengubah from '@/components/PilihPengubah';
 import PilihPJ from '@/components/PilihPJ';
 import Ikon from '@/components/Ikon';
 import { Btn, Pilih, Label, Segmen, fieldCls, kartu } from '@/components/ui';
-import { tampilkanPesan } from '@/components/Popup';
+import { tampilkanPesan, tampilkanToast } from '@/components/Popup';
 
 type Mode = 'notula' | 'manual';
 const BARU = '__baru__';
@@ -32,6 +32,10 @@ export default function TambahKeputusan() {
   const [tenggatM, setTenggatM] = useState('');
 
   const [msg, setMsg] = useState('');
+  const sukses = (t: string) => {
+    setMsg(t);
+    tampilkanToast(t);
+  };
   const [busy, setBusy] = useState(false);
 
   async function muatSumber(pilihKan?: string) {
@@ -41,7 +45,7 @@ export default function TambahKeputusan() {
       const daftar: string[] = Array.isArray(j) ? j : [];
       setDaftarSumber(daftar);
       if (pilihKan !== undefined) setPilihSumber(pilihKan);
-      else setPilihSumber(daftar.length ? daftar[0] : BARU);
+      else setPilihSumber('');
     } catch {
       setPilihSumber(BARU);
     }
@@ -53,7 +57,11 @@ export default function TambahKeputusan() {
 
   // Nama sumber yang dipakai. Nama baru disimpan ke daftar dulu.
   async function ambilNamaSumber(): Promise<string | null> {
-    if (pilihSumber !== BARU) return pilihSumber || null;
+    if (pilihSumber === '') {
+      tampilkanPesan('Pilih nama sumber terlebih dahulu.');
+      return null;
+    }
+    if (pilihSumber !== BARU) return pilihSumber;
     const nama = namaBaru.trim();
     if (!nama) {
       tampilkanPesan('Isi nama sumber baru terlebih dahulu.');
@@ -98,7 +106,7 @@ export default function TambahKeputusan() {
     setBusy(false);
     if (!r.ok) return tampilkanPesan(j.error);
     setDrafts(j.drafts.map((x: Omit<Draft, 'on'>) => ({ ...x, on: true })));
-    setMsg(`${j.drafts.length} draf ditemukan. Periksa sebelum disimpan.`);
+    sukses(`${j.drafts.length} draf ditemukan. Periksa sebelum disimpan.`);
   }
 
   function ubahDraf(i: number, p: Partial<Draft>) {
@@ -146,7 +154,7 @@ export default function TambahKeputusan() {
     setDrafts([]);
     setTeks('');
     setNamaBaru('');
-    setMsg(`${j.jumlah} keputusan tersimpan ke "${judul}".`);
+    sukses(`${j.jumlah} keputusan tersimpan ke "${judul}".`);
     await muatSumber(judul);
   }
 
@@ -164,7 +172,7 @@ export default function TambahKeputusan() {
     setPicM('');
     setTenggatM('');
     setNamaBaru('');
-    setMsg(`Keputusan tersimpan ke "${judul}".`);
+    sukses(`Keputusan tersimpan ke "${judul}".`);
     await muatSumber(judul);
   }
 
@@ -174,7 +182,7 @@ export default function TambahKeputusan() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-xl font-extrabold text-stone-900">Tambah keputusan</h2>
-            <p className="mt-1 text-sm text-stone-500">Pilih cara menambahkan keputusan, lalu lengkapi data di bawah.</p>
+            <p className="mt-1 text-sm text-stone-600">Pilih cara menambahkan keputusan, lalu lengkapi data di bawah.</p>
           </div>
           <Segmen<Mode>
             value={mode}
@@ -193,6 +201,7 @@ export default function TambahKeputusan() {
           <div>
             <Label icon="dokumen">Nama sumber</Label>
             <Pilih value={pilihSumber} onChange={(e) => setPilihSumber(e.target.value)}>
+              <option value="">— pilih nama sumber —</option>
               {daftarSumber.map((n) => (
                 <option key={n} value={n}>
                   {n}
@@ -244,7 +253,7 @@ export default function TambahKeputusan() {
                 <Ikon nama="unduh" className="h-4 w-4" /> Pilih file (.docx, .txt, .md)
                 <input type="file" accept=".docx,.txt,.md" onChange={unggah} className="hidden" />
               </label>
-              <span className="text-sm text-stone-500">atau tempel teks di bawah</span>
+              <span className="text-sm text-stone-600">atau tempel teks di bawah</span>
             </div>
             <textarea
               className={`${fieldCls} min-h-40`}
