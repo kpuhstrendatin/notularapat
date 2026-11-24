@@ -1,8 +1,5 @@
 import './globals.css';
 import type { ReactNode } from 'react';
-import { Plus_Jakarta_Sans } from 'next/font/google';
-
-const font = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap' });
 import Header from '@/components/Header';
 import PopupHost, { ToastHost } from '@/components/Popup';
 
@@ -33,7 +30,12 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id">
-      <body className={`${font.className} min-h-screen bg-[#f3eeee] text-stone-900 antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      </head>
+      <body style={{ fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif' }} className="min-h-screen bg-[#f3eeee] text-stone-900 antialiased">
         <Header />
         <PopupHost />
         <ToastHost />
