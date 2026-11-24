@@ -8,7 +8,7 @@ import Ikon from './Ikon';
 const TABS = [
   { href: '/', label: 'Dashboard', icon: 'grid' },
   { href: '/daftar', label: 'Daftar Keputusan', icon: 'daftar' },
-  { href: '/impor', label: 'Impor dari Notula', icon: 'dokumen' },
+  { href: '/impor', label: 'Tambah Keputusan', icon: 'dokumen' },
   { href: '/riwayat', label: 'Riwayat', icon: 'riwayat' },
   { href: '/laporan', label: 'Laporan', icon: 'notula' },
   { href: '/panduan', label: 'Panduan', icon: 'dokumen' },
