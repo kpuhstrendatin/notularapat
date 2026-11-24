@@ -71,7 +71,7 @@ export default function Panduan() {
         <p>Keputusan yang melewati tenggat dan belum selesai ditandai <b className="text-red-700">Terlambat</b>.</p>
       </Bagian>
 
-      <Bagian ikon="tambah" judul="Tambah Keputusan (Impor dari Notula)">
+      <Bagian ikon="tambah" judul="Tambah Keputusan">
         <p>Ada dua cara menambah keputusan: <b>impor dari notula</b> atau <b>tambah manual</b>.</p>
         <Langkah n={1}>
           <b>Pilih nama sumber.</b> Pilih dari daftar, atau pilih <i>+ Nama sumber baru</i> (notula, SK, kesepakatan, dan lain-lain).
