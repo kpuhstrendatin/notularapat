@@ -59,3 +59,40 @@ export default function PopupHost() {
     </div>
   );
 }
+
+// Notifikasi singkat untuk pesan keberhasilan (hilang otomatis)
+export function tampilkanToast(teks: string) {
+  window.dispatchEvent(new CustomEvent('toast-pesan', { detail: teks }));
+}
+
+export function ToastHost() {
+  const [teks, setTeks] = useState<string | null>(null);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const h = (e: Event) => {
+      setTeks((e as CustomEvent<string>).detail);
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => setTeks(null), 3000);
+    };
+    window.addEventListener('toast-pesan', h);
+    return () => {
+      window.removeEventListener('toast-pesan', h);
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
+  if (!teks) return null;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-x-4 bottom-24 z-40 mx-auto flex max-w-sm items-center gap-3 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-2xl md:bottom-6"
+    >
+      <span className="grid h-7 w-7 flex-none place-items-center rounded-full bg-white/20">
+        <Ikon nama="cek" className="h-4 w-4" />
+      </span>
+      {teks}
+    </div>
+  );
+}
