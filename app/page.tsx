@@ -338,9 +338,9 @@ export default function Dashboard() {
         </section>
       )}
 
-      <div className={`${rincian ? 'block' : 'hidden'} space-y-4 md:block`}>
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className={kartu}>
+        <div className={`${rincian ? 'block' : 'hidden'} md:block`}>
+<section className={kartu}>
           <h2 className="font-bold">Ringkasan per notula</h2>
           <div className="mt-3 space-y-4">
             {perNotula.map((g, i) => {
@@ -375,6 +375,7 @@ export default function Dashboard() {
             {perNotula.length === 0 && <p className="text-sm text-stone-500">Belum ada notula pada periode ini.</p>}
           </div>
         </section>
+</div>
 
         <section className={kartu}>
           <h2 className="font-bold">Perlu perhatian</h2>
@@ -395,7 +396,6 @@ export default function Dashboard() {
         </section>
       </div>
 
-      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={kartu}>
           <h2 className="font-bold">Tenggat 7 hari ke depan</h2>
