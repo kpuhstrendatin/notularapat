@@ -58,7 +58,7 @@ export default function Laporan() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-xl font-extrabold text-stone-900">Laporan</h2>
-            <p className="mt-1 text-sm text-stone-500">Pilih periode, lalu cetak atau simpan sebagai PDF.</p>
+            <p className="mt-1 text-sm text-stone-600">Pilih periode, lalu cetak atau simpan sebagai PDF.</p>
           </div>
           <Btn onClick={() => window.print()}>
             <Ikon nama="unduh" className="h-4 w-4" /> Cetak / Simpan PDF
@@ -100,7 +100,7 @@ export default function Laporan() {
 
       <article id="laporan" className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm print:border-0 print:p-0 print:shadow-none">
         <header className="border-b-2 border-[#7a1f2b] pb-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-stone-500">KPU Kabupaten Hulu Sungai Tengah</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-stone-600">KPU Kabupaten Hulu Sungai Tengah</p>
           <h1 className="mt-1 text-2xl font-extrabold text-stone-900">Laporan Tindak Lanjut Keputusan Rapat</h1>
           <p className="mt-1 text-sm font-semibold text-[#7a1f2b]">{judulPeriode}</p>
         </header>
@@ -115,7 +115,7 @@ export default function Laporan() {
             ['Terlambat', nLate],
           ].map(([l, v]) => (
             <div key={String(l)} className="rounded-xl border border-stone-200 p-3">
-              <div className="text-xs text-stone-500">{l}</div>
+              <div className="text-xs text-stone-600">{l}</div>
               <div className="text-2xl font-extrabold text-stone-900">{v}</div>
             </div>
           ))}
@@ -125,9 +125,9 @@ export default function Laporan() {
         </p>
 
         <h3 className="mt-6 font-bold text-stone-900">Per subbag</h3>
-        <table className="mt-2 w-full border-collapse text-sm">
+        <div className="mt-2 overflow-x-auto"><table className="w-full min-w-[560px] border-collapse text-sm print:min-w-0">
           <thead>
-            <tr className="border-b text-left text-xs uppercase text-stone-500">
+            <tr className="border-b text-left text-xs uppercase text-stone-600">
               <th className="py-2">Subbag</th>
               <th className="py-2 text-right">Jumlah</th>
               <th className="py-2 text-right">Selesai</th>
@@ -149,12 +149,12 @@ export default function Laporan() {
               );
             })}
           </tbody>
-        </table>
+        </table></div>
 
         <h3 className="mt-6 font-bold text-stone-900">Daftar keputusan</h3>
-        <table className="mt-2 w-full border-collapse text-sm">
+        <div className="mt-2 overflow-x-auto"><table className="w-full min-w-[560px] border-collapse text-sm print:min-w-0">
           <thead>
-            <tr className="border-b text-left text-xs uppercase text-stone-500">
+            <tr className="border-b text-left text-xs uppercase text-stone-600">
               <th className="py-2">No</th>
               <th className="py-2">Keputusan</th>
               <th className="py-2">Sumber / tanggal</th>
@@ -169,7 +169,7 @@ export default function Laporan() {
                 <td className="py-2">{i + 1}</td>
                 <td className="py-2 pr-3">
                   {d.isi}
-                  {d.pic && <div className="text-xs text-stone-500">PJ: {d.pic}</div>}
+                  {d.pic && <div className="text-xs text-stone-600">PJ: {d.pic}</div>}
                 </td>
                 <td className="py-2 pr-3 text-xs text-stone-600">
                   {d.meetings?.judul ?? '—'}
@@ -186,13 +186,13 @@ export default function Laporan() {
             ))}
             {dipilih.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-4 text-center text-stone-500">
+                <td colSpan={6} className="py-4 text-center text-stone-600">
                   Tidak ada keputusan pada periode ini.
                 </td>
               </tr>
             )}
           </tbody>
-        </table>
+        </table></div>
 
         <div className="mt-12 grid grid-cols-2 gap-8 text-sm">
           <div />
