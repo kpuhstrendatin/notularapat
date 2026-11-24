@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { tampilkanPesan } from '@/components/Popup';
+import { tampilkanPesan, tampilkanToast } from '@/components/Popup';
 import { SUBBAG, LBL, STATUS, hariIni, isLate, type Decision, type Status } from '@/lib/types';
 import { fmt, tambahHari, tanggalRapat, dalamPeriode, type Periode } from '@/lib/format';
 import PilihPengubah from '@/components/PilihPengubah';
@@ -43,8 +43,13 @@ export default function Dashboard() {
   const [notif, setNotif] = useState('default');
   const [rincian, setRincian] = useState(false);
   const [bukaFilter, setBukaFilter] = useState(false);
+  const [onboard, setOnboard] = useState(false);
   const [oleh, setOleh] = useState('');
   const [msg, setMsg] = useState('');
+  const sukses = (t: string) => {
+    setMsg(t);
+    tampilkanToast(t);
+  };
   const [err, setErr] = useState('');
 
   async function muat() {
@@ -56,6 +61,10 @@ export default function Dashboard() {
       setErr(e instanceof Error ? e.message : 'Kesalahan tidak diketahui');
     }
   }
+
+  useEffect(() => {
+    setOnboard(!localStorage.getItem('onboard-selesai'));
+  }, []);
 
   useEffect(() => {
     muat();
@@ -103,7 +112,7 @@ export default function Dashboard() {
     });
     const j = await r.json();
     if (!r.ok) return tampilkanPesan(j.error);
-    setMsg('Progres diperbarui.');
+    sukses('Progres diperbarui.');
     muat();
   }
 
@@ -121,7 +130,7 @@ export default function Dashboard() {
   }
 
   if (err) return <p className="rounded-2xl bg-red-50 p-4 text-red-700">Gagal memuat data: {err}</p>;
-  if (!rows) return <p className="rounded-2xl bg-white p-4 text-stone-500 shadow-sm">Memuat data…</p>;
+  if (!rows) return <p className="rounded-2xl bg-white p-4 text-stone-600 shadow-sm">Memuat data…</p>;
 
   const tglDasar = (d: Decision) => (dasar === 'rapat' ? tanggalRapat(d) : d.created_at.slice(0, 10));
   const dipilih = rows.filter(
@@ -175,6 +184,31 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4">
+      {onboard && (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-extrabold">Mulai dari sini</h2>
+              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm">
+                <li>Pilih <b>nama Anda</b> di bagian bawah panel ini. Ini wajib sebelum mengubah progres.</li>
+                <li>Buka <b>Daftar Keputusan</b> untuk melihat dan mengubah progres lewat ikon pensil.</li>
+                <li>Tambah keputusan baru lewat tombol <b>+</b> atau menu <b>Tambah Keputusan</b>.</li>
+                <li>Panduan lengkap ada di menu <b>Panduan</b>.</li>
+              </ol>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem('onboard-selesai', '1');
+                setOnboard(false);
+              }}
+              className="flex-none rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Mengerti
+            </button>
+          </div>
+        </section>
+      )}
       <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
         <div className="flex items-center gap-2">
           <Pilih
@@ -236,7 +270,7 @@ export default function Dashboard() {
         </div>
 
         <div className="mt-3">
-          <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-stone-500">
+          <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-stone-600">
             <Ikon nama="orang" className="h-3.5 w-3.5" /> Nama pengubah (wajib untuk mengubah progres)
           </label>
           <PilihPengubah value={oleh} onChange={setOleh} />
@@ -247,7 +281,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
         {kpi.map((k) => (
           <div key={k.label} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between text-stone-500">
+            <div className="flex items-center justify-between text-stone-600">
               <p className="text-sm">{k.label}</p>
               <Ikon nama={k.ikon} className="h-4 w-4" />
             </div>
@@ -288,7 +322,7 @@ export default function Dashboard() {
             <div key={x.s}>
               <div className="flex justify-between text-sm">
                 <span className="font-medium">{x.s}</span>
-                <span className="text-stone-500">
+                <span className="text-stone-600">
                   {x.seg.find((g) => g.st === 'selesai')?.n ?? 0} dari {x.n} selesai ·{' '}
                   <b className="text-stone-900">
                     {Math.round(((x.seg.find((g) => g.st === 'selesai')?.n ?? 0) / x.n) * 100)}%
@@ -302,7 +336,7 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
-          {perSubbag.length === 0 && <p className="text-sm text-stone-500">Belum ada data pada periode ini.</p>}
+          {perSubbag.length === 0 && <p className="text-sm text-stone-600">Belum ada data pada periode ini.</p>}
         </div>
       </section>
       </div>
@@ -351,14 +385,14 @@ export default function Dashboard() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold text-stone-900">{g.judul}</div>
-                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-stone-500">
+                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-stone-600">
                         <Ikon nama="kalender" className="h-3.5 w-3.5" />
                         {g.tanggal ? fmt(g.tanggal) : 'Tanpa tanggal'}
                       </div>
                     </div>
                     <div className="flex-none text-right">
                       <div className="text-2xl font-extrabold leading-none text-[#7a1f2b]">{p}%</div>
-                      <div className="mt-1 text-xs text-stone-500">
+                      <div className="mt-1 text-xs text-stone-600">
                         {sel} dari {g.items.length} selesai
                       </div>
                     </div>
@@ -372,7 +406,7 @@ export default function Dashboard() {
                 </div>
               );
             })}
-            {perNotula.length === 0 && <p className="text-sm text-stone-500">Belum ada notula pada periode ini.</p>}
+            {perNotula.length === 0 && <p className="text-sm text-stone-600">Belum ada notula pada periode ini.</p>}
           </div>
         </section>
 </div>
@@ -391,7 +425,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-            {terlambatList.length === 0 && <p className="text-stone-500">Tidak ada keputusan yang terlambat.</p>}
+            {terlambatList.length === 0 && <p className="text-stone-600">Tidak ada keputusan yang terlambat.</p>}
           </div>
         </section>
       </div>
@@ -403,7 +437,7 @@ export default function Dashboard() {
             {tenggat7.map((d) => (
               <div key={d.id} className="border-b pb-3 last:border-0">
                 <div className="font-medium">{d.isi}</div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-stone-500">
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-stone-600">
                   <span className="flex items-center gap-1"><Ikon nama="gedung" className="h-3.5 w-3.5" />{d.subbag}</span>
                   {d.pic && <span className="flex items-center gap-1"><Ikon nama="orang" className="h-3.5 w-3.5" />{d.pic}</span>}
                   <span className="flex items-center gap-1"><Ikon nama="kalender" className="h-3.5 w-3.5" />{fmt(d.tenggat)}</span>
@@ -418,7 +452,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-            {tenggat7.length === 0 && <p className="text-stone-500">Tidak ada tenggat dalam 7 hari ke depan.</p>}
+            {tenggat7.length === 0 && <p className="text-stone-600">Tidak ada tenggat dalam 7 hari ke depan.</p>}
           </div>
         </section>
         <div className={`${rincian ? 'block' : 'hidden'} md:block`}>
@@ -428,7 +462,7 @@ export default function Dashboard() {
             {terbaru.map((d) => (
               <div key={d.id} className="flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-4">
                 <div className="min-w-0 flex-1 text-sm font-medium">{d.isi}</div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-500 md:flex-none">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-600 md:flex-none">
                   <span>{d.subbag}</span>
                   <span>{fmt(d.tenggat)}</span>
                   {isLate(d) ? (
@@ -439,7 +473,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-            {terbaru.length === 0 && <p className="py-2 text-stone-500">Belum ada keputusan pada periode ini.</p>}
+            {terbaru.length === 0 && <p className="py-2 text-stone-600">Belum ada keputusan pada periode ini.</p>}
           </div>
         </section>
 </div>
